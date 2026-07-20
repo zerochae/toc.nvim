@@ -28,6 +28,8 @@ M.defaults = {
   markview = true,
   -- Auto-open the TOC when entering a matching buffer.
   auto_enabled = true,
+  -- Auto-close the TOC when the window switches to a non-markdown file.
+  auto_close = true,
   -- Filetypes that auto_enabled and buffer-switch tracking react to.
   filetypes = { "markdown", "quarto", "rmd", "mdx" },
 

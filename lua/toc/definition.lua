@@ -73,6 +73,7 @@
 ---@field preset? string|table named preset ("compact"|"boxed"|"minimal"|"writing"|"plain") or inline bundle
 ---@field markview boolean borrow heading/checkbox glyphs from markview.nvim when available
 ---@field auto_enabled boolean auto-open on a matching buffer
+---@field auto_close boolean auto-close when the window switches to a non-markdown file
 ---@field filetypes string[]
 ---@field mode "full"|"glyph-only"|"text-only"|"minimal"
 ---@field numbers "level"|"nested"|"flat"|false

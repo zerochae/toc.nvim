@@ -518,6 +518,20 @@ do
   ok("health.check is callable", pcall(require("toc.health").check))
 end
 
+-- ── auto_close hides the TOC when switching to a non-markdown file ──────────
+print "auto_close"
+do
+  local L = fixture("x.lua", { "local x = 1", "return x" })
+  local st = open(A, {})
+  ok("open before switch", view.is_open())
+  vim.api.nvim_set_current_win(st.src_win)
+  vim.cmd("edit " .. vim.fn.fnameescape(L))
+  vim.wait(300, function()
+    return not view.is_open()
+  end, 10)
+  ok("closed on non-markdown file", not view.is_open())
+end
+
 -- ── auto_enabled opens TOC on markdown filetype ─────────────────────────────
 print "auto_enabled"
 do

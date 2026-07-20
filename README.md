@@ -37,7 +37,7 @@ jump.
 - Root-level headings carry no tree connector; children nest under them
 - Truncation (`…`) so long entries never overflow the panel
 - Debounced live refresh on edit, always refresh on save, auto-rebind on buffer switch
-- Auto-open on entering a Markdown-family buffer (`auto_enabled`)
+- Auto-open on a Markdown buffer (`auto_enabled`); auto-close on a non-markdown file (`auto_close`)
 - Colorscheme-aware highlights (links to markview groups when present)
 
 ## Install
@@ -99,6 +99,7 @@ require("toc").setup {
   auto_refresh = true,      -- live-update as the document changes
   refresh_debounce = 150,   -- ms of quiet before a live refresh (0 = instant; save is always instant)
   auto_enabled = true,      -- auto-open on a Markdown-family buffer
+  auto_close = true,        -- auto-close when the window switches to a non-markdown file
   preset = nil,             -- a named preset (see Presets) or an inline table
   markview = true,          -- borrow heading/checkbox/callout glyphs from markview.nvim
   filetypes = { "markdown", "quarto", "rmd", "mdx" },

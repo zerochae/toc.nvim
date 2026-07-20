@@ -227,6 +227,9 @@ local function set_switch_autocmd()
       end
       if is_markdown(args.buf) then
         rebind_source(win, args.buf)
+      elseif config.options.auto_close and vim.bo[args.buf].buftype == "" and vim.bo[args.buf].filetype ~= "" then
+        -- Switched to a real file that isn't markdown: hide the TOC.
+        M.close()
       end
     end,
   })
