@@ -60,35 +60,36 @@
 ---@field next? string
 ---@field prev? string
 
+-- All fields are optional: setup() takes a partial config merged over defaults.
 ---@class toc.Config
----@field width integer|"auto" fixed column count, or "auto" to fit the longest line
----@field padding integer extra columns beside the content when width = "auto"
----@field width_max integer upper bound for the auto width
----@field position "right"|"left"
----@field follow_cursor boolean TOC movement drives the source cursor
----@field follow_source boolean source movement marks the active entry
----@field focus_on_open boolean focus the TOC when it opens
----@field close_on_select boolean close the TOC after <CR>
----@field auto_refresh boolean live-update as the buffer changes
----@field refresh_debounce integer ms of quiet before a live refresh (0 = instant)
----@field preset? string|table named preset ("compact"|"boxed"|"minimal"|"writing"|"plain") or inline bundle
----@field markview boolean borrow heading/checkbox glyphs from markview.nvim when available
----@field auto_enabled boolean auto-open on a matching buffer
----@field auto_close boolean auto-close when the window switches to a non-markdown file
----@field filetypes string[]
----@field mode "full"|"glyph-only"|"text-only"|"minimal"
----@field numbers "level"|"nested"|"flat"|false
----@field labels boolean show label prefixes ("heading", "anchor", …); false = numbers/indices only
----@field truncate boolean clip overflow with an ellipsis
----@field indent integer per-depth indent when guides = false
----@field guides boolean draw tree guide lines
----@field title string|false header text; false hides it
----@field elements toc.Elements
----@field glyphs toc.Glyphs
----@field highlights string[] highlight group per heading level
----@field effects toc.Effects
----@field window table<string, any> window-local options for the panel
----@field keymaps toc.Keymaps
+---@field width? integer|"auto" fixed column count, or "auto" to fit the longest line
+---@field padding? integer extra columns beside the content when width = "auto"
+---@field width_max? integer upper bound for the auto width
+---@field position? "right"|"left"
+---@field follow_cursor? boolean TOC movement drives the source cursor
+---@field follow_source? boolean source movement marks the active entry
+---@field focus_on_open? boolean focus the TOC when it opens
+---@field close_on_select? boolean close the TOC after <CR>
+---@field auto_refresh? boolean live-update as the buffer changes
+---@field refresh_debounce? integer ms of quiet before a live refresh (0 = instant)
+---@field preset? string|toc.Config named preset ("compact"|"boxed"|"minimal"|"writing"|"plain") or inline bundle
+---@field markview? boolean borrow heading/checkbox glyphs from markview.nvim when available
+---@field auto_enabled? boolean auto-open on a matching buffer
+---@field auto_close? boolean auto-close when the window switches to a non-markdown file
+---@field filetypes? string[]
+---@field mode? "full"|"glyph-only"|"text-only"|"minimal"
+---@field numbers? "level"|"nested"|"flat"|false
+---@field labels? boolean show label prefixes ("heading", "anchor", …); false = numbers/indices only
+---@field truncate? boolean clip overflow with an ellipsis
+---@field indent? integer per-depth indent when guides = false
+---@field guides? boolean draw tree guide lines
+---@field title? string|false header text; false hides it
+---@field elements? toc.Elements
+---@field glyphs? toc.Glyphs
+---@field highlights? string[] highlight group per heading level
+---@field effects? toc.Effects
+---@field window? table<string, boolean|string|integer> window-local options for the panel
+---@field keymaps? toc.Keymaps
 
 ---@class TocEntry
 ---@field lnum integer 1-based line in the source buffer

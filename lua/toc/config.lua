@@ -125,7 +125,7 @@ M.defaults = {
 
 M.options = vim.deepcopy(M.defaults)
 
----@param s any
+---@param s string? value from markview config; non-strings are treated as absent
 ---@return string|nil
 local function trim(s)
   if type(s) ~= "string" then
@@ -222,8 +222,8 @@ local function derive_markview()
 end
 
 ---Resolve `preset` (a name or an inline table) to a partial config.
----@param preset any
----@return table
+---@param preset string|toc.Config|nil
+---@return toc.Config
 local function resolve_preset(preset)
   if type(preset) == "string" then
     local ok, presets = pcall(require, "toc.presets")
@@ -234,9 +234,9 @@ local function resolve_preset(preset)
   return {}
 end
 
----@param opts toc.Config|nil partial configuration, deep-merged over the defaults
+---@param opts? toc.Config partial configuration, deep-merged over the defaults
 function M.setup(opts)
-  ---@type table<string, any>
+  ---@type toc.Config
   local o = opts or {}
   local preset = resolve_preset(o.preset)
 
