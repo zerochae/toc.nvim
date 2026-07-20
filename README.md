@@ -46,8 +46,7 @@ jump.
 
 ```lua
 {
-  "toc.nvim",
-  dir = "~/Dev/nvim-project/toc.nvim", -- local development path
+  "zerochae/toc.nvim",
   ft = { "markdown", "quarto", "rmd", "mdx" },
   dependencies = {
     "nvim-tree/nvim-web-devicons", -- optional: code-block language icons
