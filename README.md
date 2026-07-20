@@ -49,6 +49,10 @@ jump.
   "toc.nvim",
   dir = "~/Dev/nvim-project/toc.nvim", -- local development path
   ft = { "markdown", "quarto", "rmd", "mdx" },
+  dependencies = {
+    "nvim-tree/nvim-web-devicons", -- optional: code-block language icons
+    "OXY2DEV/markview.nvim",       -- optional: borrow heading/checkbox/callout glyphs & colours
+  },
   keys = {
     { "<leader>t", "<cmd>Toc toggle<cr>", desc = "Toggle TOC" },
   },
@@ -58,8 +62,15 @@ jump.
 }
 ```
 
-Parsing is regex-based, so **no dependencies** are required. A [Nerd Font](https://www.nerdfonts.com)
-is needed for the glyphs.
+Parsing is regex-based, so all dependencies are **optional**:
+
+- [nvim-web-devicons](https://github.com/nvim-tree/nvim-web-devicons) — coloured
+  language icons in code-block labels (`code 1 [ lua]`). Without it you get `code 1 [lua]`.
+- [markview.nvim](https://github.com/OXY2DEV/markview.nvim) — reuses its heading,
+  checkbox and callout glyphs/colours (`markview = true`).
+
+A [Nerd Font](https://www.nerdfonts.com) is needed for the glyphs (except the
+`plain` preset, which is Nerd-Font-free).
 
 ## Usage
 
