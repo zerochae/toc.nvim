@@ -230,6 +230,31 @@ do
   eq("html h3 level", h[3].level, 3)
 end
 
+-- ── parser dispatches on filetype: HTML (regex fallback path) ───────────────
+print "html filetype"
+do
+  local H = fixture("h.html", {
+    "<h1>Title</h1>",
+    "<section>",
+    '  <h2 id="a">Getting Started</h2>',
+    '  <p>see <a href="u">the guide</a> here</p>',
+    '  <img alt="diagram" src="d/e.png">',
+    "</section>",
+  })
+  toc.setup { auto_enabled = false, elements = { link = { enable = true }, image = { enable = true } } }
+  vim.cmd("edit " .. vim.fn.fnameescape(H))
+  vim.bo.filetype = "html"
+  local h = parser.parse(0)
+  local kinds = {}
+  for _, e in ipairs(h) do
+    kinds[e.kind] = (kinds[e.kind] or 0) + 1
+  end
+  ok("h1/h2 headings parsed", kinds.heading == 2)
+  ok("<a> link parsed", kinds.link == 1)
+  ok("<img> image parsed", kinds.image == 1)
+  eq("first heading text", h[1].text, "Title")
+end
+
 -- ── parser: typed elements ──────────────────────────────────────────────────
 print "elements"
 do

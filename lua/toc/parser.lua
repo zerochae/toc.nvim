@@ -3,6 +3,7 @@ local M = {}
 -- Parser modules keyed by filetype; markdown is the default.
 local by_filetype = {
   help = "toc.parsers.help",
+  html = "toc.parsers.html",
 }
 
 ---Parse `bufnr` into sorted TOC entries, dispatching on its filetype.
