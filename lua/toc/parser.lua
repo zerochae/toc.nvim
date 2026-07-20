@@ -1,7 +1,10 @@
 local M = {}
 
--- Parser modules keyed by filetype; markdown is the default.
+local DEFAULT = "toc.parsers.markdown"
+
+-- Parser modules keyed by filetype; markdown handles the rest (quarto/rmd/mdx…).
 local by_filetype = {
+  markdown = "toc.parsers.markdown",
   help = "toc.parsers.help",
   html = "toc.parsers.html",
 }
@@ -11,7 +14,7 @@ local by_filetype = {
 ---@return TocEntry[]
 function M.parse(bufnr)
   local ft = vim.bo[bufnr].filetype
-  local entries = require(by_filetype[ft] or "toc.parsers.markdown").parse(bufnr)
+  local entries = require(by_filetype[ft] or DEFAULT).parse(bufnr)
 
   table.sort(entries, function(a, b)
     if a.lnum ~= b.lnum then
