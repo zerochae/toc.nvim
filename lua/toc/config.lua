@@ -92,7 +92,9 @@ M.defaults = {
   -- Movement feedback.
   effects = {
     -- Flash the target line in the source window on jump/follow.
-    beacon = { enable = true, hl = "TocBeacon", duration = 250, fade_steps = 8 },
+    -- priority sits above Neovim's default (4096) so the flash wins over
+    -- heavy decorators like markview on heading lines.
+    beacon = { enable = true, hl = "TocBeacon", duration = 250, fade_steps = 8, priority = 10000 },
     -- Marker beside the active entry inside the TOC.
     active_sign = { enable = true, text = "", hl = "TocActiveSign" },
     -- Line highlight on the active entry inside the TOC.

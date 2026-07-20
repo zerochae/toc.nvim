@@ -136,6 +136,24 @@ do
   eq("heading after outer fence found", h[2].text, "After Fence")
 end
 
+-- ── a bullet containing a link yields both a bullet and an anchor ───────────
+print "bullet + link"
+do
+  local BL = fixture("bl.md", {
+    "# Doc",
+    "- see [markview](https://x) here",
+  })
+  toc.setup { auto_enabled = false, elements = { link = { enable = true }, bullet = { enable = true } } }
+  vim.cmd("edit " .. vim.fn.fnameescape(BL))
+  local by_kind = {}
+  for _, e in ipairs(parser.parse(0)) do
+    by_kind[e.kind] = e
+  end
+  eq("inline link extracted as anchor", by_kind.link.text, "markview")
+  eq("bullet still emitted", by_kind.bullet.text, "see markview here")
+  eq("anchor nests one level under the bullet", by_kind.link.level, by_kind.bullet.level + 1)
+end
+
 -- ── parser: raw HTML headings ───────────────────────────────────────────────
 print "html headings"
 do

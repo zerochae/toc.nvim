@@ -36,6 +36,7 @@
 ---@field hl string highlight group used as the flash colour
 ---@field duration integer total fade time in ms
 ---@field fade_steps integer number of fade frames
+---@field priority integer extmark priority (above 4096 to beat markview)
 
 ---@class toc.ActiveSign
 ---@field enable boolean
@@ -97,3 +98,4 @@
 ---@field done? boolean task completion state
 ---@field state? string task: raw char inside [ ] ("x", " ", "/", …)
 ---@field label? string per-instance label prefix (e.g. callout type)
+---@field ord? integer insertion order, used as a stable-sort tiebreak

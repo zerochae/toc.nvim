@@ -64,7 +64,7 @@ function M.beacon(buf, lnum)
   local ok, mark = pcall(vim.api.nvim_buf_set_extmark, buf, ns, lnum - 1, 0, {
     line_hl_group = active.hl,
     hl_eol = true,
-    priority = 200,
+    priority = opts.priority or 10000,
   })
   if not ok then
     return

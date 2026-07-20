@@ -36,6 +36,7 @@ function M.parse(bufnr)
     return head_level + 1 + (extra or 0)
   end
   local function add(entry)
+    entry.ord = #entries + 1 -- preserves document order for a stable sort
     entries[#entries + 1] = entry
   end
 
@@ -130,25 +131,28 @@ function M.parse(bufnr)
       return
     end
 
+    -- When the line is a bullet, its inline links/images nest one level under it.
+    local b_indent, b_rest = line:match "^(%s*)[%-%*%+]%s+(.*)$"
+    local bullet = b_rest ~= nil and not b_rest:match "^%[.%]" and on("bullet")
+    local bullet_level = bullet and child_level(math.floor(#b_indent / 2)) or nil
+    local inline_level = bullet_level and bullet_level + 1 or child_level()
+
     if on("image") then
       for alt in line:gmatch "!%[([^%]]*)%]%b()" do
-        add { lnum = i, level = child_level(), kind = "image", text = alt ~= "" and alt or "image" }
+        add { lnum = i, level = inline_level, kind = "image", text = alt ~= "" and alt or "image" }
       end
     end
     if on("link") then
       for txt in line:gmatch "[^!]%[([^%]]+)%]%b()" do
-        add { lnum = i, level = child_level(), kind = "link", text = clean(txt) }
+        add { lnum = i, level = inline_level, kind = "link", text = clean(txt) }
       end
       local lead = line:match "^%[([^%]]+)%]%b()"
       if lead then
-        add { lnum = i, level = child_level(), kind = "link", text = clean(lead) }
+        add { lnum = i, level = inline_level, kind = "link", text = clean(lead) }
       end
     end
-    if on("bullet") then
-      local b_indent, b_rest = line:match "^(%s*)[%-%*%+]%s+(.*)$"
-      if b_rest and not b_rest:match "^%[.%]" then
-        add { lnum = i, level = child_level(math.floor(#b_indent / 2)), kind = "bullet", text = clean(b_rest) }
-      end
+    if bullet then
+      add { lnum = i, level = bullet_level, kind = "bullet", text = clean(b_rest) }
     end
   end
 
@@ -157,10 +161,13 @@ function M.parse(bufnr)
   end
 
   table.sort(entries, function(a, b)
-    if a.lnum == b.lnum then
+    if a.lnum ~= b.lnum then
+      return a.lnum < b.lnum
+    end
+    if a.level ~= b.level then
       return a.level < b.level
     end
-    return a.lnum < b.lnum
+    return a.ord < b.ord
   end)
   return entries
 end
