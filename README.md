@@ -3,17 +3,14 @@
 A fancy table of contents for Markdown in a side split. Moving the cursor in
 the TOC moves it in the document (and back), with a beacon flash on jump.
 
-```
-󰼏 heading 1.1 Introduction
-├╴󰼐 heading 2.1 Getting Started
-│ ├╴ task 1 install the plugin
-│ ╰╴ task 2 read the docs
-├╴󰼐 heading 2.2 Usage
-│ ├╴ code 1 [ lua]
-│ ╰╴ note 1 call setup once
-╰╴󰼐 heading 2.3 Media
-  ╰╴ image 1 architecture
-```
+## Demo
+
+<img width="1895" height="2000" alt="boxed" src="https://github.com/user-attachments/assets/3f53101d-e57c-475e-a1db-bddecb9eada0" />
+<img width="1895" height="2000" alt="compact" src="https://github.com/user-attachments/assets/5d9d566e-515c-4dc4-b0e6-9c79f67ee7dc" />
+<img width="1895" height="2000" alt="minimal" src="https://github.com/user-attachments/assets/51dee4cc-6af1-4d79-9d5d-c220bf68a3fd" />
+<img width="1895" height="2000" alt="plain" src="https://github.com/user-attachments/assets/d73dfb40-faa8-464a-8ca5-578979319dbe" />
+<img width="1895" height="2000" alt="writing" src="https://github.com/user-attachments/assets/ea130369-b4e7-42c9-897a-524f062ad7d1" />
+
 
 ## Features
 
