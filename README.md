@@ -21,6 +21,7 @@ the TOC moves it in the document (and back), with a beacon flash on jump.
 - Fixed or `auto` width, auto-open/close, debounced + on-save refresh
 - Optional [markview.nvim](https://github.com/OXY2DEV/markview.nvim) glyphs/colours
   and [devicons](https://github.com/nvim-tree/nvim-web-devicons) language icons
+- Markdown and Vim help (`doc/*.txt`) out of the box; add formats under `lua/toc/parsers/`
 
 ## Install
 

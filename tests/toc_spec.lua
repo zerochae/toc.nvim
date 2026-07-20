@@ -154,6 +154,35 @@ do
   eq("anchor nests one level under the bullet", by_kind.link.level, by_kind.bullet.level + 1)
 end
 
+-- ── parser dispatches on filetype: Vim help sections ───────────────────────
+print "help filetype"
+do
+  local H = fixture("h.txt", {
+    "*mine.txt*  My help",
+    "",
+    "==============================================================================",
+    "SECTION ONE                                                        *mine-one*",
+    "",
+    "body text",
+    "",
+    "------------------------------------------------------------------------------",
+    "1.1 Subsection                                                 *mine-one-sub*",
+    "",
+    "==============================================================================",
+    "SECTION TWO                                                        *mine-two*",
+  })
+  toc.setup { auto_enabled = false }
+  vim.cmd("edit " .. vim.fn.fnameescape(H))
+  vim.bo.filetype = "help"
+  local h = parser.parse(0)
+  eq("help section count", #h, 3)
+  eq("level-1 section, tag stripped", h[1].text, "SECTION ONE")
+  eq("level-1 level", h[1].level, 1)
+  eq("subsection is level 2", h[2].level, 2)
+  eq("subsection text", h[2].text, "1.1 Subsection")
+  eq("second section", h[3].text, "SECTION TWO")
+end
+
 -- ── parser: raw HTML headings ───────────────────────────────────────────────
 print "html headings"
 do

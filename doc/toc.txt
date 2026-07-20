@@ -32,6 +32,12 @@ no plugins are required. nvim-web-devicons and markview.nvim are optional; see
 |toc-integrations|. A Nerd Font is needed for the glyphs, except the `plain`
 preset.
 
+The parser dispatches on filetype. Vim help files (filetype "help") are also
+supported: `===` rules start level-1 sections and `---` rules level-2
+subsections, with the trailing `*tag*` dropped from the title. Run `:Toc` in a
+help buffer, or add "help" to `filetypes` for auto-open while editing one.
+Additional formats can be added under lua/toc/parsers/.
+
 Setup: >lua
     require("toc").setup({})
 <
