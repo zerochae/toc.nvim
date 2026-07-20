@@ -7,17 +7,30 @@ CONTENTS                                                          *toc.nvim*
     2. Commands ............................. |toc-commands|
     3. Mappings ............................. |toc-mappings|
     4. Configuration ........................ |toc-config|
-    5. Elements ............................. |toc-elements|
-    6. Highlights ........................... |toc-highlights|
-    7. Health ............................... |toc-health|
+       4.1 Layout ........................... |toc-config-layout|
+       4.2 Behaviour ........................ |toc-config-behaviour|
+       4.3 Display .......................... |toc-config-display|
+       4.4 Elements ......................... |toc-config-elements|
+       4.5 Glyphs ........................... |toc-config-glyphs|
+       4.6 Effects .......................... |toc-config-effects|
+       4.7 Window & keymaps ................. |toc-config-window|
+    5. Presets .............................. |toc-presets|
+    6. markview & devicons .................. |toc-integrations|
+    7. Highlights ........................... |toc-highlights|
+    8. Health ............................... |toc-health|
 
 ==============================================================================
 1. INTRODUCTION                                                   *toc-intro*
 
-toc.nvim renders the outline of a Markdown document in a fixed-width split on
-the right. It indexes headings and, optionally, tasks, code blocks, callouts,
+toc.nvim renders the outline of a Markdown document in a fixed- or auto-width
+split. It indexes headings and, optionally, tasks, code blocks, callouts,
 tables, images, links and bullets. Moving the cursor in the TOC moves the
 cursor in the source document (and vice-versa), with a beacon flash on jump.
+
+Parsing is regex-based (ATX, setext, and raw HTML `<h1>`-`<h6>` headings), so
+no plugins are required. nvim-web-devicons and markview.nvim are optional; see
+|toc-integrations|. A Nerd Font is needed for the glyphs, except the `plain`
+preset.
 
 Setup: >lua
     require("toc").setup({})
@@ -38,7 +51,7 @@ Lua API: >lua
 ==============================================================================
 3. MAPPINGS                                                    *toc-mappings*
 
-Buffer-local, inside the TOC window (see `keymaps` in |toc-config|):
+Buffer-local, inside the TOC window (configurable, see `keymaps`):
 
     <CR>    jump to the entry and focus the source window
     o       jump but keep focus in the TOC
@@ -49,78 +62,197 @@ Buffer-local, inside the TOC window (see `keymaps` in |toc-config|):
 ==============================================================================
 4. CONFIGURATION                                                 *toc-config*
 
-Defaults (pass a subset to setup(); values deep-merge): >lua
-    require("toc").setup({
-      width = 34,               -- fixed panel width
-      position = "right",       -- "right" | "left"
-      follow_cursor = true,     -- TOC movement drives the source cursor
-      follow_source = true,     -- source movement marks the active entry
-      focus_on_open = true,     -- focus the TOC when it opens
-      close_on_select = false,  -- close after <CR>
-      auto_refresh = true,      -- live-update as the buffer changes
-      refresh_debounce = 150,   -- ms of quiet before a live refresh (0 = instant)
-      auto_enabled = true,      -- auto-open on a Markdown-family buffer
-      filetypes = { "markdown", "quarto", "rmd", "mdx" },
-      mode = "full",            -- "full"|"glyph-only"|"text-only"|"minimal"
-      numbers = "level",        -- "level"|"nested"|"flat"|false
-      truncate = true,          -- clip overflow with "…"
-      indent = 2,               -- per-depth indent when guides = false
-      guides = true,            -- tree guide lines
-      title = "󰠶 Table of Contents", -- false to hide
-      elements = { ... },       -- see |toc-elements|
-      glyphs = { ... },         -- heading[1-6], fallback, branch, last, vertical
-      highlights = { "TocHeading1", ... },
-      effects = { beacon = {...}, active_sign = {...}, active_line = {...} },
-      window = { ... },         -- window-local options for the panel
-      keymaps = { ... },        -- see |toc-mappings|
-    })
-<
-Numbering styles for `numbers`:
-    "level"   <level>.<nth-at-level>   H1 -> 1.1, H2 -> 2.1, 2.2
-    "nested"  hierarchical outline      1, 1.1, 1.1.1
-    "flat"    running count             1, 2, 3
-    false     no numbers
+Pass a partial table to setup(); it is deep-merged over the defaults. The
+layering order that produces the final config is:
 
-==============================================================================
-5. ELEMENTS                                                    *toc-elements*
+    defaults  <  markview-derived  <  preset  <  your setup options
 
-Each kind is one block: whether it is indexed, its glyph, and its label. >lua
-    elements = {
-      heading = { enable = true,  label = "heading" },
-      task    = { enable = true,  label = "task", done = "", todo = "" },
-      code    = { enable = true,  label = "code",  glyph = "" },
-      callout = { enable = true,  glyph = "" },   -- label = callout type
-      table   = { enable = true,  label = "table", glyph = "" },
-      image   = { enable = true,  label = "image", glyph = "" },
-      link    = { enable = false, label = "anchor", glyph = "" },
-      bullet  = { enable = false, label = "item",  glyph = "" },
+so your explicit options always win. See |toc-presets| and |toc-integrations|.
+
+------------------------------------------------------------------------------
+4.1 Layout                                                *toc-config-layout*
+
+    width         number | "auto"   Fixed column count, or fit the longest
+                                     line. Default 34.
+    padding       number            Extra columns beside content when
+                                     width = "auto". Default 2.
+    width_max     number            Upper bound for the auto width (content
+                                     past it is truncated). Default 60.
+    position      "right" | "left"  Which side the split opens on.
+    indent        number            Spaces per depth when guides = false.
+    guides        boolean           Draw tree guide lines. Default true.
+    title         string | false    Header line text; false hides it.
+
+------------------------------------------------------------------------------
+4.2 Behaviour                                          *toc-config-behaviour*
+
+    follow_cursor    boolean   TOC movement drives the source cursor.
+    follow_source    boolean   Source movement marks the active entry.
+    focus_on_open    boolean   Focus the TOC when it opens.
+    close_on_select  boolean   Close the TOC after <CR>.
+    auto_refresh     boolean   Live-update as the buffer changes.
+    refresh_debounce number    ms of quiet before a live refresh (0 =
+                               instant). Saving always refreshes immediately.
+    auto_enabled     boolean   Auto-open on a matching buffer.
+    auto_close       boolean   Auto-close when the window switches to a
+                               real file that is not markdown.
+    filetypes        string[]  Filetypes auto_enabled / switching react to.
+
+------------------------------------------------------------------------------
+4.3 Display                                              *toc-config-display*
+
+    mode      Which segments each entry shows:
+                "full"        glyph + number/label + text
+                "glyph-only"  glyph + number/label (text hidden)
+                "text-only"   number/label + text (glyph hidden)
+                "minimal"     glyph only
+
+    numbers   Heading numbering:
+                "level"   <level>.<nth-at-level>  (H1 -> 1.1, H2 -> 2.1, 2.2)
+                "nested"  hierarchical outline     (1, 1.1, 1.1.1)
+                "flat"    running count            (1, 2, 3)
+                false     no numbers
+
+    labels    boolean   Show label prefixes ("heading", "anchor", ...). When
+                        false only the number/index is shown.
+
+    truncate  boolean   Clip text that would overflow the panel with an
+                        ellipsis.
+
+------------------------------------------------------------------------------
+4.4 Elements                                            *toc-config-elements*
+
+`elements` holds one block per kind. Each block: >lua
+    <kind> = {
+      enable = true,   -- index this kind
+      label  = "task", -- prefix shown before the index ("" = number only)
+      glyph  = "",     -- icon for non-heading kinds
     }
 <
-Headings take their icon from the per-level `glyphs.heading` array. Non-heading
-entries show "<label> <n>" (e.g. "anchor 1", "code 2"); callouts use their own
-type as the label ("note 1", "warning 1"). Set a label to "" for numbers only.
-Raw HTML headings (<h1>..<h6>) are recognised alongside ATX and setext.
+Kinds: heading, task, code, callout, table, image, link, bullet.
+link and bullet are disabled by default (opt-in; they are noisy).
+
+Special cases:
+    heading   Takes its icon from the per-level `glyphs.heading` array
+              (not `glyph`). `label` defaults to "heading".
+    task      Uses `done` / `todo` glyphs instead of `glyph`, plus optional
+              `states` (map of the char in `[ ]` -> glyph, e.g. ["/"] = ...)
+              and `state_hls` (char -> highlight group).
+    code      Shows its language in the label: "code 1 [lua]". With devicons
+              a coloured icon is added: "code 1 [<icon> lua]". Disable the
+              icon with `lang_glyph = false`.
+    callout   Labels itself by type ("note 1", "warning 1", ...). Per-type
+              glyphs/colours come from `types` and `type_hls` (keyed by the
+              lowercased type), populated from markview when available.
+
+Non-heading entries render as "<label> <n>" (e.g. "anchor 1"), numbered per
+kind. Callouts number per type.
+
+------------------------------------------------------------------------------
+4.5 Glyphs                                                *toc-config-glyphs*
+
+Structural glyphs (Nerd Font icons + tree connectors): >lua
+    glyphs = {
+      heading  = { ... },  -- per-level heading icons (index 1-6)
+      fallback = "...",    -- icon for entries with no kind glyph
+      branch   = "|-",     -- non-last child connector
+      last     = "`-",     -- last child connector
+      vertical = "| ",     -- ancestor guide column
+    }
+<
+The exact default icons are in `lua/toc/config.lua`. Blank ancestor columns
+match the display width of `vertical`, so multi-cell connectors align.
+
+------------------------------------------------------------------------------
+4.6 Effects                                              *toc-config-effects*
+>lua
+    effects = {
+      -- Fade a highlight on the jumped-to source line.
+      beacon = { enable = true, hl = "TocBeacon",
+                 duration = 250, fade_steps = 8 },
+      -- Sign beside the active entry in the TOC.
+      active_sign = { enable = true, text = "...", hl = "TocActiveSign" },
+      -- Line highlight on the active entry in the TOC.
+      active_line = { enable = true, hl = "TocActiveLine" },
+    }
+<
+------------------------------------------------------------------------------
+4.7 Window & keymaps                                      *toc-config-window*
+
+`window` is a table of window-local options applied to the panel (number,
+wrap, cursorline, signcolumn, foldcolumn, winfixwidth, ...). `signcolumn`
+defaults to "yes:1" so the active-entry sign is visible.
+
+`keymaps` sets the buffer-local mappings; set any to nil to skip it: >lua
+    keymaps = {
+      jump = "<CR>", jump_stay = "o", close = "q",
+      refresh = "R", next = "J", prev = "K",
+    }
+<
+==============================================================================
+5. PRESETS                                                      *toc-presets*
+
+A preset is a named bundle of options from the `toc.presets` module, applied
+under your explicit setup options (see the layering in |toc-config|). >lua
+    require("toc").setup { preset = "compact" }
+<
+Built-in presets:
+
+    compact   Narrow panel, glyph + label/number, text hidden.
+    boxed     Roomy box-drawing tree; keeps glyphs and markview colours.
+    minimal   Bare glyph tree: no numbers, labels, title or text.
+    writing   Headings only, text-first, nested numbers, no tree lines.
+    plain     ASCII / box-drawing tree; no Nerd Font or devicons.
+
+`preset` also accepts an inline table, e.g. `preset = { guides = false }`.
+
+Register your own by adding to the module: >lua
+    require("toc.presets").notes = { mode = "text-only", numbers = "flat" }
+    require("toc").setup { preset = "notes" }
+<
+Rendered examples for every preset live in the `examples/` directory.
 
 ==============================================================================
-6. HIGHLIGHTS                                                *toc-highlights*
+6. MARKVIEW & DEVICONS                                     *toc-integrations*
 
-Defaults link to markview.nvim groups when present, else core / treesitter
-groups. Override with |nvim_set_hl()|.
+Both are optional and detected at runtime.
 
+markview.nvim ~
+With `markview = true` (default), toc borrows glyphs and colours from
+markview's resolved config: per-level heading signs, checkbox glyphs (incl.
+custom states like `[/]`, `[?]`), and per-type callout icons and highlights.
+markview must be set up before toc for your own overrides to be picked up;
+otherwise markview's defaults are used. Set `markview = false` to opt out.
+
+nvim-web-devicons ~
+When present, code-block labels gain a coloured language icon
+("code 1 [<icon> lua]"). Without it the label is "code 1 [lua]". Disable per
+config with `elements.code.lang_glyph = false`.
+
+==============================================================================
+7. HIGHLIGHTS                                                *toc-highlights*
+
+Defaults link to markview.nvim groups when present, otherwise to core /
+treesitter groups. Override with |nvim_set_hl()|, e.g. >lua
+    vim.api.nvim_set_hl(0, "TocHeading1", { fg = "#e06c75", bold = true })
+<
     TocHeading1..TocHeading6   per-level heading glyph
     TocText                    entry text (defaults to Normal)
     TocNumber                  section numbers and element labels
     TocTitle                   panel header
-    TocGuide                   tree guide lines
+    TocGuide                   tree guide lines (colour only, no style)
     TocTask / TocTaskDone      unchecked / checked task glyph
     TocCode TocCallout TocTable TocImage TocLink TocBullet   element glyphs
     TocActiveSign / TocActiveLine   active-entry sign / line
     TocBeacon                  jump beacon flash
 
-==============================================================================
-7. HEALTH                                                        *toc-health*
+Code language icons use per-language groups (TocLang_<lang>) coloured by
+devicons. Callouts and custom task states use markview's highlight groups.
 
-Run |:checkhealth| toc to verify Neovim version, termguicolors, the loaded
+==============================================================================
+8. HEALTH                                                        *toc-health*
+
+Run |:checkhealth| toc to verify the Neovim version, termguicolors, the loaded
 configuration, and which element kinds are indexed.
 
 vim:tw=78:ts=8:ft=help:norl:
