@@ -301,6 +301,18 @@ do
   local joined = table.concat(lines, "\n")
   ok("contains heading text", joined:find("Section A", 1, true) ~= nil)
   eq("line maps to source heading 4", st.line_to_heading[st.heading_to_line[4]], 4)
+
+  -- cursor starts on the first entry, not the title line
+  eq("cursor opens on first entry", vim.api.nvim_win_get_cursor(st.toc_win)[1], st.heading_to_line[1])
+  -- moving above the first entry snaps back to it
+  vim.api.nvim_set_current_win(st.toc_win)
+  pcall(vim.api.nvim_win_set_cursor, st.toc_win, { 1, 0 })
+  vim.api.nvim_exec_autocmds("CursorMoved", { buffer = st.toc_buf })
+  eq("cursor clamped to first entry", vim.api.nvim_win_get_cursor(st.toc_win)[1], st.heading_to_line[1])
+  -- horizontal movement snaps back to column 0 (vertical-only)
+  pcall(vim.api.nvim_win_set_cursor, st.toc_win, { st.heading_to_line[2], 3 })
+  vim.api.nvim_exec_autocmds("CursorMoved", { buffer = st.toc_buf })
+  eq("cursor snaps to column 0", vim.api.nvim_win_get_cursor(st.toc_win)[2], 0)
 end
 
 -- ── highlight mapping: glyph → heading colour, text → Normal ────────────────

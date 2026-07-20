@@ -89,12 +89,33 @@ function M.jump(stay)
   end
 end
 
+---Display line of the first entry (below the title/blank), or nil.
+---@return integer|nil
+local function first_entry_line()
+  return state.heading_to_line[1]
+end
+
 ---Follow: TOC cursor movement drives the source cursor.
 local function on_toc_cursor()
-  if state.syncing or not config.options.follow_cursor or not source_win_valid() then
+  if state.syncing then
     return
   end
-  local idx = state.line_to_heading[vim.api.nvim_win_get_cursor(state.toc_win)[1]]
+  -- Vertical-only: keep the cursor at column 0 and out of the title/blank rows.
+  local pos = vim.api.nvim_win_get_cursor(state.toc_win)
+  local row, col = pos[1], pos[2]
+  local first = first_entry_line()
+  if first and row < first then
+    row = first
+  end
+  if row ~= pos[1] or col ~= 0 then
+    state.syncing = true
+    pcall(vim.api.nvim_win_set_cursor, state.toc_win, { row, 0 })
+    state.syncing = false
+  end
+  if not config.options.follow_cursor or not source_win_valid() then
+    return
+  end
+  local idx = state.line_to_heading[row]
   if idx then
     scroll_source_to(idx)
   end
@@ -272,6 +293,11 @@ local function create_window()
   set_keymaps()
   set_autocmds()
   set_switch_autocmd()
+
+  -- Start on the first entry, not the title line.
+  if state.heading_to_line[1] then
+    pcall(vim.api.nvim_win_set_cursor, state.toc_win, { state.heading_to_line[1], 0 })
+  end
 
   if not config.options.focus_on_open then
     vim.api.nvim_set_current_win(state.src_win)
