@@ -183,6 +183,36 @@ do
   eq("second section", h[3].text, "SECTION TWO")
 end
 
+-- ── help extras: ~ subheadings, tags, code, callouts ────────────────────────
+print "help elements"
+do
+  local H = fixture("h2.txt", {
+    "==============================================================================",
+    "INTRO                                                              *h2-intro*",
+    "",
+    "Getting Started ~",
+    "Run it: >",
+    "    :Cmd go",
+    "<",
+    "Note: careful here.",
+    "Body with a *h2-tag* target.",
+  })
+  toc.setup {
+    auto_enabled = false,
+    elements = { link = { enable = true }, code = { enable = true }, callout = { enable = true } },
+  }
+  vim.cmd("edit " .. vim.fn.fnameescape(H))
+  vim.bo.filetype = "help"
+  local kinds = {}
+  for _, e in ipairs(parser.parse(0)) do
+    kinds[e.kind] = (kinds[e.kind] or 0) + 1
+  end
+  ok("two headings (section + ~ subheading)", kinds.heading == 2)
+  ok("code block indexed", kinds.code == 1)
+  ok("Note callout indexed", kinds.callout == 1)
+  ok("body tag indexed as anchor", kinds.link == 1)
+end
+
 -- ── parser: raw HTML headings ───────────────────────────────────────────────
 print "html headings"
 do

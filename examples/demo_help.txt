@@ -1,0 +1,44 @@
+*demo.txt*   Demo Vim help file for toc.nvim
+
+Open this with filetype=help and run :Toc to see help sections, `~`
+subheadings, tags (as anchors), code blocks, and Note/WARNING callouts.
+
+==============================================================================
+INTRODUCTION                                                    *demo-intro*
+
+Some intro prose with a *demo-anchor* tag in the body.
+
+Getting Started ~
+Run the thing like so: >
+    :Demo start --port 8080
+<
+Note: the server binds to localhost only.
+
+WARNING: disabling the cache triples latency.
+
+------------------------------------------------------------------------------
+Configuration                                                  *demo-config*
+
+Options ~
+
+                                                             *demo-opt-width*
+'width'     number, default 34.  Panel width.
+
+                                                              *demo-opt-side*
+'side'      string, default "right".
+
+==============================================================================
+MAPPINGS                                                      *demo-mappings*
+
+Inside the panel:
+
+Movement ~
+    <CR>    jump to the entry
+    q       close
+
+==============================================================================
+ABOUT                                                            *demo-about*
+
+MIT licensed.
+
+vim:tw=78:ts=8:ft=help:norl:

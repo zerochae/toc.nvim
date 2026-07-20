@@ -2,7 +2,7 @@ local config = require "toc.config"
 
 local M = {}
 
----A line made only of `ch` (>= 3), the section rules in Vim help files.
+-- Lines whose only non-space content is >= 3 of `ch` are Vim help section rules.
 ---@param line string
 ---@param ch string
 ---@return boolean
@@ -10,49 +10,118 @@ local function is_rule(line, ch)
   return line:match("^" .. ch .. "+%s*$") ~= nil and #line:gsub("%s", "") >= 3
 end
 
----Strip trailing/inline *tags* and surrounding whitespace from a title.
+-- Strip inline/trailing *tags* and surrounding whitespace from a title.
 ---@param s string
 ---@return string
 local function clean(s)
-  s = s:gsub("%*[^*%s]+%*", "")
+  s = s:gsub("%*[^%s*]+%*", "")
   s = s:gsub("^%s+", "")
   s = s:gsub("%s+$", "")
   return s
 end
 
----Parse a Vim help buffer: `===` rules start level-1 sections, `---` level-2.
----The heading is the next non-blank line; its `*tag*` is dropped.
+local CALLOUTS = { note = true, warning = true, tip = true, caution = true, deprecated = true }
+
+---Parse a Vim help buffer into typed entries (unsorted).
+---  `===` / `---` rules  -> level 1 / 2 section headings (title on the next line)
+---  `Foo ~`              -> subheading, one level under the current section
+---  `> ... <`            -> code block
+---  `Note:` / `WARNING:` -> callout
+---  `*tag*`              -> anchor (link)
 ---@param bufnr integer
 ---@return TocEntry[]
 function M.parse(bufnr)
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local heading = config.options.elements.heading
-  if heading ~= nil and heading.enable == false then
-    return {}
+  local el = config.options.elements
+  local entries = {}
+
+  local function on(kind)
+    return el[kind] ~= nil and el[kind].enable
+  end
+  local function add(entry)
+    entry.ord = #entries + 1
+    entries[#entries + 1] = entry
   end
 
-  local entries = {}
-  for i, line in ipairs(lines) do
-    local level
-    if is_rule(line, "=") then
-      level = 1
-    elseif is_rule(line, "%-") then
-      level = 2
-    end
-    if level then
-      local j = i + 1
-      while lines[j] and lines[j]:match "^%s*$" do
-        j = j + 1
+  local section = 0 -- level of the current === / --- section
+  local head = 0 -- level of the most recent heading (section or ~)
+  local expect -- a rule was seen; the next non-blank line is its title
+  local in_code = false
+
+  local function scan(i, line)
+    -- Inside a `>` block: an unindented line (or a `<`) ends it.
+    if in_code then
+      if line:match "^<" then
+        in_code = false
+        return
+      elseif line == "" or line:match "^%s" then
+        return
       end
-      local title = lines[j]
-      if title and not is_rule(title, "=") and not is_rule(title, "%-") then
-        local text = clean(title)
-        if text ~= "" then
-          entries[#entries + 1] =
-            { lnum = j, level = level, kind = "heading", text = text, ord = #entries + 1 }
+      in_code = false -- unindented line: block ended, process it below
+    end
+
+    if expect then
+      if line:match "%S" then
+        if not is_rule(line, "=") and not is_rule(line, "%-") then
+          local text = clean(line)
+          if text ~= "" and on("heading") then
+            section, head = expect, expect
+            add { lnum = i, level = expect, kind = "heading", text = text }
+          end
         end
+        expect = nil
+      end
+      return
+    end
+
+    if is_rule(line, "=") then
+      expect = 1
+      return
+    elseif is_rule(line, "%-") then
+      expect = 2
+      return
+    end
+
+    local sub = line:match "^(%S.-)%s*~%s*$"
+    if sub then
+      head = math.max(section, 1) + 1
+      if on("heading") then
+        add { lnum = i, level = head, kind = "heading", text = clean(sub) }
+      end
+      return
+    end
+
+    local word, rest = line:match "^%s*([%a]+):%s*(.*)$"
+    if word and CALLOUTS[word:lower()] then
+      if on("callout") then
+        add {
+          lnum = i,
+          level = head + 1,
+          kind = "callout",
+          text = rest ~= "" and clean(rest) or word,
+          label = word:lower(),
+        }
+      end
+      return
+    end
+
+    if line:match ">%s*$" then
+      if on("code") then
+        add { lnum = i, level = head + 1, kind = "code", text = "code" }
+      end
+      in_code = true
+      return
+    end
+
+    if on("link") then
+      for tag in line:gmatch "%*([^%s*|]+)%*" do
+        add { lnum = i, level = head + 1, kind = "link", text = tag }
       end
     end
+  end
+
+  for i, line in ipairs(lines) do
+    scan(i, line)
   end
   return entries
 end
