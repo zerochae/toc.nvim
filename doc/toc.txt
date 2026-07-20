@@ -1,0 +1,126 @@
+*toc.txt*                      A fancy Markdown table of contents for Neovim
+
+==============================================================================
+CONTENTS                                                          *toc.nvim*
+
+    1. Introduction ......................... |toc-intro|
+    2. Commands ............................. |toc-commands|
+    3. Mappings ............................. |toc-mappings|
+    4. Configuration ........................ |toc-config|
+    5. Elements ............................. |toc-elements|
+    6. Highlights ........................... |toc-highlights|
+    7. Health ............................... |toc-health|
+
+==============================================================================
+1. INTRODUCTION                                                   *toc-intro*
+
+toc.nvim renders the outline of a Markdown document in a fixed-width split on
+the right. It indexes headings and, optionally, tasks, code blocks, callouts,
+tables, images, links and bullets. Moving the cursor in the TOC moves the
+cursor in the source document (and vice-versa), with a beacon flash on jump.
+
+Setup: >lua
+    require("toc").setup({})
+<
+==============================================================================
+2. COMMANDS                                                    *toc-commands*
+
+                                                                       *:Toc*
+:Toc [action]     action is one of toggle (default), open, close, refresh.
+
+Lua API: >lua
+    require("toc").open()
+    require("toc").close()
+    require("toc").toggle()
+    require("toc").refresh()
+    require("toc").is_open()
+<
+==============================================================================
+3. MAPPINGS                                                    *toc-mappings*
+
+Buffer-local, inside the TOC window (see `keymaps` in |toc-config|):
+
+    <CR>    jump to the entry and focus the source window
+    o       jump but keep focus in the TOC
+    J / K   move to next / previous entry (source follows)
+    R       refresh
+    q       close
+
+==============================================================================
+4. CONFIGURATION                                                 *toc-config*
+
+Defaults (pass a subset to setup(); values deep-merge): >lua
+    require("toc").setup({
+      width = 34,               -- fixed panel width
+      position = "right",       -- "right" | "left"
+      follow_cursor = true,     -- TOC movement drives the source cursor
+      follow_source = true,     -- source movement marks the active entry
+      focus_on_open = true,     -- focus the TOC when it opens
+      close_on_select = false,  -- close after <CR>
+      auto_refresh = true,      -- live-update as the buffer changes
+      refresh_debounce = 150,   -- ms of quiet before a live refresh (0 = instant)
+      auto_enabled = true,      -- auto-open on a Markdown-family buffer
+      filetypes = { "markdown", "quarto", "rmd", "mdx" },
+      mode = "full",            -- "full"|"glyph-only"|"text-only"|"minimal"
+      numbers = "level",        -- "level"|"nested"|"flat"|false
+      truncate = true,          -- clip overflow with "…"
+      indent = 2,               -- per-depth indent when guides = false
+      guides = true,            -- tree guide lines
+      title = "󰠶 Table of Contents", -- false to hide
+      elements = { ... },       -- see |toc-elements|
+      glyphs = { ... },         -- heading[1-6], fallback, branch, last, vertical
+      highlights = { "TocHeading1", ... },
+      effects = { beacon = {...}, active_sign = {...}, active_line = {...} },
+      window = { ... },         -- window-local options for the panel
+      keymaps = { ... },        -- see |toc-mappings|
+    })
+<
+Numbering styles for `numbers`:
+    "level"   <level>.<nth-at-level>   H1 -> 1.1, H2 -> 2.1, 2.2
+    "nested"  hierarchical outline      1, 1.1, 1.1.1
+    "flat"    running count             1, 2, 3
+    false     no numbers
+
+==============================================================================
+5. ELEMENTS                                                    *toc-elements*
+
+Each kind is one block: whether it is indexed, its glyph, and its label. >lua
+    elements = {
+      heading = { enable = true,  label = "heading" },
+      task    = { enable = true,  label = "task", done = "", todo = "" },
+      code    = { enable = true,  label = "code",  glyph = "" },
+      callout = { enable = true,  glyph = "" },   -- label = callout type
+      table   = { enable = true,  label = "table", glyph = "" },
+      image   = { enable = true,  label = "image", glyph = "" },
+      link    = { enable = false, label = "anchor", glyph = "" },
+      bullet  = { enable = false, label = "item",  glyph = "" },
+    }
+<
+Headings take their icon from the per-level `glyphs.heading` array. Non-heading
+entries show "<label> <n>" (e.g. "anchor 1", "code 2"); callouts use their own
+type as the label ("note 1", "warning 1"). Set a label to "" for numbers only.
+Raw HTML headings (<h1>..<h6>) are recognised alongside ATX and setext.
+
+==============================================================================
+6. HIGHLIGHTS                                                *toc-highlights*
+
+Defaults link to markview.nvim groups when present, else core / treesitter
+groups. Override with |nvim_set_hl()|.
+
+    TocHeading1..TocHeading6   per-level heading glyph
+    TocText                    entry text (defaults to Normal)
+    TocNumber                  section numbers and element labels
+    TocTitle                   panel header
+    TocGuide                   tree guide lines
+    TocTask / TocTaskDone      unchecked / checked task glyph
+    TocCode TocCallout TocTable TocImage TocLink TocBullet   element glyphs
+    TocActiveSign / TocActiveLine   active-entry sign / line
+    TocBeacon                  jump beacon flash
+
+==============================================================================
+7. HEALTH                                                        *toc-health*
+
+Run |:checkhealth| toc to verify Neovim version, termguicolors, the loaded
+configuration, and which element kinds are indexed.
+
+vim:tw=78:ts=8:ft=help:norl:
