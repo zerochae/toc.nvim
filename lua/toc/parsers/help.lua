@@ -105,9 +105,11 @@ function M.parse(bufnr)
       return
     end
 
-    if line:match ">%s*$" then
+    -- A line ending in ">" or ">{lang}" (e.g. ">lua") opens a code block.
+    local lang = line:match "%s>([%w_]*)%s*$" or line:match "^>([%w_]*)%s*$"
+    if lang then
       if on("code") then
-        add { lnum = i, level = head + 1, kind = "code", text = "code" }
+        add { lnum = i, level = head + 1, kind = "code", text = lang ~= "" and lang or "code" }
       end
       in_code = true
       return

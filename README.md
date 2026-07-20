@@ -30,7 +30,7 @@ the TOC moves it in the document (and back), with a beacon flash on jump.
 ```lua
 {
   "zerochae/toc.nvim",
-  ft = { "markdown", "quarto", "rmd", "mdx" },
+  ft = { "markdown", "quarto", "rmd", "mdx", "help" },
   dependencies = { -- both optional
     "nvim-tree/nvim-web-devicons",
     "OXY2DEV/markview.nvim",
