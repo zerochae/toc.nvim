@@ -141,6 +141,15 @@ function M.parse(bufnr)
       for alt in line:gmatch "!%[([^%]]*)%]%b()" do
         add { lnum = i, level = inline_level, kind = "image", text = alt ~= "" and alt or "image" }
       end
+      -- HTML <img ...> tags: prefer alt, else the src filename.
+      for tag in line:gmatch "<[Ii][Mm][Gg]%s[^>]*>" do
+        local alt = tag:match "[Aa][Ll][Tt]%s*=%s*\"([^\"]*)\"" or tag:match "[Aa][Ll][Tt]%s*=%s*'([^']*)'"
+        if not alt or alt == "" then
+          local src = tag:match "[Ss][Rr][Cc]%s*=%s*\"([^\"]*)\"" or tag:match "[Ss][Rr][Cc]%s*=%s*'([^']*)'"
+          alt = src and src:match "([^/]+)$" or "image"
+        end
+        add { lnum = i, level = inline_level, kind = "image", text = alt }
+      end
     end
     if on("link") then
       for txt in line:gmatch "[^!]%[([^%]]+)%]%b()" do
