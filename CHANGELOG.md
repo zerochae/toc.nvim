@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/zerochae/toc.nvim/compare/v1.0.1...v1.1.0) (2026-07-21)
+
+
+### Features
+
+* add max_level option to hide deeply nested entries ([#12](https://github.com/zerochae/toc.nvim/issues/12)) ([1c03d1f](https://github.com/zerochae/toc.nvim/commit/1c03d1f6082c7a24792b4a96f91fb0c90f8914ca))
+* skip YAML/TOML front matter in the markdown parser ([#11](https://github.com/zerochae/toc.nvim/issues/11)) ([6020114](https://github.com/zerochae/toc.nvim/commit/6020114a0483aef47c9d0eb80c5bfabca1f821ab))
+
+
+### Bug Fixes
+
+* parse code, callouts and list items in the HTML regex fallback ([#13](https://github.com/zerochae/toc.nvim/issues/13)) ([2157a09](https://github.com/zerochae/toc.nvim/commit/2157a09ffdccfa05c4e0c747ba522d70b83e8040))
+
 ## [1.0.1](https://github.com/zerochae/toc.nvim/compare/v1.0.0...v1.0.1) (2026-07-21)
 
 
