@@ -65,6 +65,7 @@ require("toc").setup {
   width = "auto",             -- or a fixed column count
   numbers = "level",          -- level | nested | flat | false
   labels = true,              -- false = numbers/indices only
+  max_level = nil,            -- e.g. 2 to hide anything deeper than H2
 }
 ```
 

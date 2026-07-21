@@ -97,6 +97,26 @@ describe("parser: front matter", function()
   end)
 end)
 
+-- ── parser: max_level ───────────────────────────────────────────────────────
+describe("parser: max_level", function()
+  it("hides entries deeper than max_level", function()
+    toc.setup { auto_enabled = false, max_level = 2, elements = vim.deepcopy(HEADINGS_ONLY) }
+    vim.cmd("edit " .. vim.fn.fnameescape(A))
+    local entries = parser.parse(0)
+    for _, e in ipairs(entries) do
+      assert.is_true(e.level <= 2)
+    end
+    -- A has H1, H2, H3, H2, H1(setext); the H3 is dropped.
+    assert.equals(4, #entries)
+  end)
+
+  it("shows every level when max_level is unset", function()
+    toc.setup { auto_enabled = false, elements = vim.deepcopy(HEADINGS_ONLY) }
+    vim.cmd("edit " .. vim.fn.fnameescape(A))
+    assert.equals(5, #parser.parse(0))
+  end)
+end)
+
 -- ── parser: nested fences (4-backtick wrapping 3-backtick) ──────────────────
 describe("parser: nested fences", function()
   local entries
