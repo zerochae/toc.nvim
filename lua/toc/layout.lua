@@ -307,7 +307,8 @@ function M.build(entries)
   local cap = (opts.width == "auto") and (opts.width_max or 60) or opts.width
   local avail_base = cap - M.sign_width()
 
-  local lines, marks = {}, {}
+  local lines = {} ---@type string[]
+  local marks = {} ---@type TocMark[]
   local line_to_entry, entry_to_line = {}, {}
 
   if opts.title then
