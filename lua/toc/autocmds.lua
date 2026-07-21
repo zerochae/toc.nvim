@@ -36,9 +36,10 @@ local function stop_refresh_timer()
   end
 end
 
+---Is `buf` a real file whose filetype the TOC indexes?
 ---@param buf integer
 ---@return boolean
-local function is_markdown(buf)
+local function is_toc_filetype(buf)
   if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].buftype ~= "" then
     return false
   end
@@ -142,7 +143,7 @@ local function set_switch_autocmd()
       if win == state.toc_win or args.buf == state.toc_buf or args.buf == state.src_buf then
         return
       end
-      if is_markdown(args.buf) then
+      if is_toc_filetype(args.buf) then
         rebind_source(win, args.buf)
       elseif config.options.auto_close and vim.bo[args.buf].buftype == "" and vim.bo[args.buf].filetype ~= "" then
         -- Switched to a real file that isn't indexed: hide the TOC.
