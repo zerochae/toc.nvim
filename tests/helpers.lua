@@ -85,7 +85,8 @@ function M.open(file, opts)
   vim.cmd "silent! %bwipeout!"
   vim.cmd("edit " .. vim.fn.fnameescape(file))
   M.toc.open()
-  return M.view.state()
+  -- open() always leaves a live panel, so state() is non-nil here.
+  return M.view.state() --[[@as View]]
 end
 
 ---@param buf integer
