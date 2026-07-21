@@ -248,6 +248,33 @@ do
   ok("inline <img> image parsed in markdown", (kinds.image or 0) == 1)
 end
 
+-- ── parser: multiline inline HTML in markdown (details, table, dl) ───────────
+print "html blocks in markdown"
+do
+  local E = fixture("blocks.md", {
+    "# Title",
+    "<details>",
+    "  <summary>Expand me</summary>",
+    "</details>",
+    "<table>",
+    "  <caption>Scores</caption>",
+    "  <tr><th>N</th></tr>",
+    "</table>",
+    "<dl>",
+    "  <dt>Term</dt>",
+    "</dl>",
+  })
+  toc.setup { auto_enabled = false, elements = { summary = { enable = true }, table = { enable = true }, definition = { enable = true } } }
+  vim.cmd("edit " .. vim.fn.fnameescape(E))
+  local by_kind = {}
+  for _, e in ipairs(parser.parse(0)) do
+    by_kind[e.kind] = by_kind[e.kind] or e
+  end
+  eq("inline <summary> in markdown", by_kind.summary and by_kind.summary.text, "Expand me")
+  eq("multiline <table> caption in markdown", by_kind.table and by_kind.table.text, "Scores")
+  eq("inline <dt> in markdown", by_kind.definition and by_kind.definition.text, "Term")
+end
+
 -- ── parser dispatches on filetype: HTML (regex fallback path) ───────────────
 print "html filetype"
 do
@@ -271,6 +298,40 @@ do
   ok("<a> link parsed", kinds.link == 1)
   ok("<img> image parsed", kinds.image == 1)
   eq("first heading text", h[1].text, "Title")
+end
+
+-- ── parser: HTML details/summary, table, definition list ────────────────────
+print "html rich elements"
+do
+  local H = fixture("rich.html", {
+    "<h1>Doc</h1>",
+    "<details>",
+    "  <summary>Advanced options</summary>",
+    "  <p>hidden</p>",
+    "</details>",
+    "<table>",
+    "  <caption>Feature matrix</caption>",
+    "  <tr><th>Name</th><th>OK</th></tr>",
+    "</table>",
+    "<dl>",
+    "  <dt>TOC</dt>",
+    "  <dd>Table of contents.</dd>",
+    "</dl>",
+  })
+  toc.setup { auto_enabled = false, elements = { summary = { enable = true }, table = { enable = true }, definition = { enable = true } } }
+  vim.cmd("edit " .. vim.fn.fnameescape(H))
+  vim.bo.filetype = "html"
+  local h = parser.parse(0)
+  local by_kind = {}
+  for _, e in ipairs(h) do
+    by_kind[e.kind] = by_kind[e.kind] or e
+  end
+  ok("<summary> parsed", by_kind.summary ~= nil)
+  eq("summary text", by_kind.summary and by_kind.summary.text, "Advanced options")
+  ok("<table> parsed", by_kind.table ~= nil)
+  eq("table caption used", by_kind.table and by_kind.table.text, "Feature matrix")
+  ok("<dt> definition parsed", by_kind.definition ~= nil)
+  eq("definition term text", by_kind.definition and by_kind.definition.text, "TOC")
 end
 
 -- ── parser: typed elements ──────────────────────────────────────────────────

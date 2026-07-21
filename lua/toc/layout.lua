@@ -105,6 +105,8 @@ local KIND_HL = {
   image = "TocImage",
   link = "TocLink",
   bullet = "TocBullet",
+  summary = "TocSummary",
+  definition = "TocDefinition",
 }
 
 ---@param e TocEntry

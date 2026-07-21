@@ -26,6 +26,8 @@ local defaults = {
   TocImage = { link = "MarkviewImage", fallback = "Directory" },
   TocLink = { link = "MarkviewHyperlink", fallback = "Underlined" },
   TocBullet = { link = "MarkviewListItemStar", fallback = "Special" },
+  TocSummary = { link = "MarkviewHeading4", fallback = "Title" },
+  TocDefinition = { link = "MarkviewListItemPlus", fallback = "Identifier" },
 }
 
 ---@param name string

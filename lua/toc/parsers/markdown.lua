@@ -128,6 +128,19 @@ function M.parse(bufnr)
       return
     end
 
+    -- HTML <table> (spans lines): label from its caption/first <th> (shared).
+    if on("table") and line:match "^%s*<[Tt][Aa][Bb][Ll][Ee][%s>]" then
+      local block = line
+      for j = i + 1, #lines do
+        block = block .. "\n" .. lines[j]
+        if lines[j]:match "</[Tt][Aa][Bb][Ll][Ee]>" then
+          break
+        end
+      end
+      add { lnum = i, level = child_level(), kind = "table", text = html.table_label(block) }
+      return
+    end
+
     -- When the line is a bullet, its inline links/images nest one level under it.
     local b_indent, b_rest = line:match "^(%s*)[%-%*%+]%s+(.*)$"
     local bullet = b_rest ~= nil and not b_rest:match "^%[.%]" and on("bullet")
@@ -154,6 +167,16 @@ function M.parse(bufnr)
       -- HTML <a href> links (shared with the html parser).
       for _, text in ipairs(html.links(line)) do
         add { lnum = i, level = inline_level, kind = "link", text = text }
+      end
+    end
+    if on("summary") then
+      for _, text in ipairs(html.summaries(line)) do
+        add { lnum = i, level = inline_level, kind = "summary", text = text }
+      end
+    end
+    if on("definition") then
+      for _, text in ipairs(html.terms(line)) do
+        add { lnum = i, level = inline_level, kind = "definition", text = text }
       end
     end
     if bullet then

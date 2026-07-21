@@ -137,8 +137,11 @@ so your explicit options always win. See |toc-presets| and |toc-integrations|.
       glyph  = "",     -- icon for non-heading kinds
     }
 <
-Kinds: heading, task, code, callout, table, image, link, bullet.
-link and bullet are disabled by default (opt-in; they are noisy).
+Kinds: heading, task, code, callout, table, image, link, bullet, summary,
+definition. summary indexes HTML <details><summary> disclosures; definition
+indexes <dl><dt> terms. Both HTML and inline HTML in markdown are read through
+the same scanner.
+link, bullet, and definition are disabled by default (opt-in; they are noisy).
 
 Special cases:
     heading   Takes its icon from the per-level `glyphs.heading` array

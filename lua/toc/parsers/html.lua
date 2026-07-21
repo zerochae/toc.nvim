@@ -77,15 +77,53 @@ function M.links(line)
   return out
 end
 
+---Title of each `<summary>...</summary>` (a `<details>` disclosure) on the line.
+---@param line string
+---@return string[]
+function M.summaries(line)
+  local out = {}
+  for inner in line:gmatch "<[Ss][Uu][Mm][Mm][Aa][Rr][Yy][^>]*>(.-)</[Ss][Uu][Mm][Mm][Aa][Rr][Yy]>" do
+    out[#out + 1] = M.flatten(inner) ~= "" and M.flatten(inner) or "summary"
+  end
+  return out
+end
+
+---Text of each `<dt>...</dt>` (definition-list term) on the line.
+---@param line string
+---@return string[]
+function M.terms(line)
+  local out = {}
+  for inner in line:gmatch "<[Dd][Tt][^>]*>(.-)</[Dd][Tt]>" do
+    out[#out + 1] = M.flatten(inner) ~= "" and M.flatten(inner) or "term"
+  end
+  return out
+end
+
+---Caption of a `<table>`: its `<caption>`, else the first `<th>`, else "table".
+---@param html_text string the table element's source
+---@return string
+function M.table_label(html_text)
+  local cap = html_text:match "<[Cc][Aa][Pp][Tt][Ii][Oo][Nn][^>]*>(.-)</[Cc][Aa][Pp][Tt][Ii][Oo][Nn]>"
+  if cap and M.flatten(cap) ~= "" then
+    return M.flatten(cap)
+  end
+  local th = html_text:match "<[Tt][Hh][^>]*>(.-)</[Tt][Hh]>"
+  if th and M.flatten(th) ~= "" then
+    return M.flatten(th)
+  end
+  return "table"
+end
+
 -- ── full html-buffer parsers ────────────────────────────────────────────────
 
--- tag_name -> element kind for non-heading tags handled by treesitter.
+-- tag_name -> element kind for tags whose title is just their flattened text.
+-- <a>/<img> (need attrs) and <table> (needs a caption) have dedicated branches.
 local TS_KIND = {
-  a = "link",
-  img = "image",
   blockquote = "callout",
   pre = "code",
   li = "bullet",
+  summary = "summary",
+  dt = "definition",
 }
 
 ---Structure and positions from treesitter; attrs/text from each node's source.
@@ -144,6 +182,9 @@ local function parse_treesitter(bufnr)
           text = M.attr(vim.treesitter.get_node_text(container, bufnr), "href") or "link"
         end
         add { lnum = lnum, level = head_level + 1, kind = "link", text = text }
+      elseif tag == "table" and enabled "table" then
+        local tt = (element and element:type() == "element") and vim.treesitter.get_node_text(element, bufnr) or ""
+        add { lnum = lnum, level = head_level + 1, kind = "table", text = M.table_label(tt) }
       elseif TS_KIND[tag] and enabled(TS_KIND[tag]) then
         local kind = TS_KIND[tag]
         local text = kind == "code" and "code" or (inner ~= "" and inner or kind)
@@ -186,6 +227,16 @@ local function parse_regex(bufnr)
       if enabled "image" then
         for _, text in ipairs(M.images(line)) do
           add { lnum = i, level = head_level + 1, kind = "image", text = text }
+        end
+      end
+      if enabled "summary" then
+        for _, text in ipairs(M.summaries(line)) do
+          add { lnum = i, level = head_level + 1, kind = "summary", text = text }
+        end
+      end
+      if enabled "definition" then
+        for _, text in ipairs(M.terms(line)) do
+          add { lnum = i, level = head_level + 1, kind = "definition", text = text }
         end
       end
     end

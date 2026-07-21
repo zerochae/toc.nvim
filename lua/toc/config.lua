@@ -67,6 +67,8 @@ M.defaults = {
     table = { enable = true, label = "table", glyph = "" },
     image = { enable = true, label = "image", glyph = "" },
     link = { enable = false, label = "anchor", glyph = "" },
+    summary = { enable = true, label = "summary", glyph = "" },
+    definition = { enable = false, label = "term", glyph = "" },
     bullet = { enable = false, label = "item", glyph = "" },
   },
 

@@ -15,12 +15,12 @@ the TOC moves it in the document (and back), with a beacon flash on jump.
 ## Features
 
 - Two-way cursor follow with a jump beacon
-- Typed entries: headings, tasks, code, callouts, tables, images, links, bullets
+- Typed entries: headings, tasks, code, callouts, tables, images, links, bullets, HTML disclosures and definition terms
 - Display modes (`full` / `glyph-only` / `text-only` / `minimal`) and presets
 - `level` / `nested` / `flat` numbering, per-element glyphs and labels
 - Fixed or `auto` width, auto-open/close, debounced + on-save refresh
 - Optional [markview.nvim](https://github.com/OXY2DEV/markview.nvim) glyphs/colours
-  and [devicons](https://github.com/nvim-tree/nvim-web-devicons) language icons
+- Optional [devicons](https://github.com/nvim-tree/nvim-web-devicons) language icons
 - Markdown and Vim help (`doc/*.txt`) out of the box; add formats under `lua/toc/parsers/`
 
 ## Install

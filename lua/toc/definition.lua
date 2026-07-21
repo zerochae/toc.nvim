@@ -23,6 +23,8 @@
 ---@field image toc.Element
 ---@field link toc.Element
 ---@field bullet toc.Element
+---@field summary toc.Element
+---@field definition toc.Element
 
 ---@class toc.Glyphs
 ---@field heading string[] per-level heading icons (index 1-6)
@@ -94,7 +96,7 @@
 ---@class TocEntry
 ---@field lnum integer 1-based line in the source buffer
 ---@field level integer tree depth level
----@field kind "heading"|"task"|"code"|"callout"|"table"|"image"|"link"|"bullet"
+---@field kind "heading"|"task"|"code"|"callout"|"table"|"image"|"link"|"bullet"|"summary"|"definition"
 ---@field text string cleaned label
 ---@field done? boolean task completion state
 ---@field state? string task: raw char inside [ ] ("x", " ", "/", …)
