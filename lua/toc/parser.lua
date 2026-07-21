@@ -1,3 +1,5 @@
+local config = require "toc.config"
+
 local M = {}
 
 local DEFAULT = "toc.parsers.markdown"
@@ -25,6 +27,13 @@ function M.parse(bufnr)
     end
     return (a.ord or 0) < (b.ord or 0)
   end)
+
+  local max = config.options.max_level
+  if max then
+    entries = vim.tbl_filter(function(e)
+      return e.level <= max
+    end, entries)
+  end
   return entries
 end
 

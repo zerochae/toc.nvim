@@ -71,6 +71,18 @@ describe("config validation", function()
     assert.is_true(#matching(msgs, "invalid width") >= 1)
   end)
 
+  it("warns on an out-of-range max_level but accepts 1-6", function()
+    local bad = capture_warnings(function()
+      toc.setup { auto_enabled = false, max_level = 9 }
+    end)
+    assert.is_true(#matching(bad, "invalid max_level") >= 1)
+
+    local ok = capture_warnings(function()
+      toc.setup { auto_enabled = false, max_level = 3 }
+    end)
+    assert.equals(0, #matching(ok, "invalid max_level"))
+  end)
+
   it("warns when setup is not given a table", function()
     local msgs = capture_warnings(function()
       toc.setup "nope"

@@ -82,6 +82,7 @@
 ---@field mode? "full"|"glyph-only"|"text-only"|"minimal"
 ---@field numbers? "level"|"nested"|"flat"|false
 ---@field labels? boolean show label prefixes ("heading", "anchor", …); false = numbers/indices only
+---@field max_level? integer deepest level to index (1-6); entries deeper than this are hidden
 ---@field truncate? boolean clip overflow with an ellipsis
 ---@field indent? integer per-depth indent when guides = false
 ---@field guides? boolean draw tree guide lines

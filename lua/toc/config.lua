@@ -47,6 +47,9 @@ M.defaults = {
   numbers = "level",
   -- Show label prefixes ("heading", "task", "anchor", …); false = numbers/indices only.
   labels = true,
+  -- Deepest level to index; entries deeper than this are hidden. Applies to
+  -- heading depth (and the child level of nested elements). nil shows all.
+  max_level = nil,
   -- Truncate text that would overflow the panel width with "…".
   truncate = true,
   -- Indent (spaces) added per depth when guides = false.
@@ -278,6 +281,9 @@ local function validate(o)
   end
   if o.width ~= nil and o.width ~= "auto" and type(o.width) ~= "number" then
     warn(('invalid width %s (expected a number or "auto")'):format(vim.inspect(o.width)))
+  end
+  if o.max_level ~= nil and (type(o.max_level) ~= "number" or o.max_level < 1 or o.max_level > 6) then
+    warn(("invalid max_level %s (expected a number 1-6, or nil)"):format(vim.inspect(o.max_level)))
   end
 end
 

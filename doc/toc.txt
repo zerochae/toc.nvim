@@ -125,6 +125,9 @@ so your explicit options always win. See |toc-presets| and |toc-integrations|.
     labels    boolean   Show label prefixes ("heading", "anchor", ...). When
                         false only the number/index is shown.
 
+    max_level number    Deepest level to index (1-6); entries deeper than this
+                        are hidden. Unset (nil) shows every level.
+
     truncate  boolean   Clip text that would overflow the panel with an
                         ellipsis.
 
