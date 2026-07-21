@@ -15,7 +15,7 @@ CONTENTS                                                          *toc.nvim*
        4.6 Effects .......................... |toc-config-effects|
        4.7 Window & keymaps ................. |toc-config-window|
     5. Presets .............................. |toc-presets|
-    6. markview & devicons .................. |toc-integrations|
+    6. plugin integrations .................. |toc-integrations|
     7. Highlights ........................... |toc-highlights|
     8. Health ............................... |toc-health|
 
@@ -27,10 +27,11 @@ split. It indexes headings and, optionally, tasks, code blocks, callouts,
 tables, images, links and bullets. Moving the cursor in the TOC moves the
 cursor in the source document (and vice-versa), with a beacon flash on jump.
 
-Parsing is regex-based (ATX, setext, and raw HTML `<h1>`-`<h6>` headings), so
-no plugins are required. nvim-web-devicons and markview.nvim are optional; see
-|toc-integrations|. A Nerd Font is needed for the glyphs, except the `plain`
-preset.
+Markdown and Vim help parsing is regex-based, so no plugins are required.
+HTML files use treesitter when its parser is installed (`:TSInstall html`),
+falling back to a limited regex scanner otherwise. nvim-web-devicons,
+markview.nvim and nvim-treesitter are optional; see |toc-integrations|.
+A Nerd Font is needed for the glyphs, except the `plain` preset.
 
 The parser dispatches on filetype. Vim help files (filetype "help") are also
 supported: `===` rules start level-1 sections, `---` rules level-2
@@ -139,8 +140,8 @@ so your explicit options always win. See |toc-presets| and |toc-integrations|.
 <
 Kinds: heading, task, code, callout, table, image, link, bullet, summary,
 definition. summary indexes HTML <details><summary> disclosures; definition
-indexes <dl><dt> terms. Both HTML and inline HTML in markdown are read through
-the same scanner.
+indexes <dl><dt> terms. Inline HTML in markdown is read with regex; HTML
+files use treesitter when available, else the same regex scanner.
 link, bullet, and definition are disabled by default (opt-in; they are noisy).
 
 Special cases:
@@ -224,9 +225,9 @@ Register your own by adding to the module: >lua
 Rendered examples for every preset live in the `examples/` directory.
 
 ==============================================================================
-6. MARKVIEW & DEVICONS                                     *toc-integrations*
+6. PLUGIN INTEGRATIONS                                     *toc-integrations*
 
-Both are optional and detected at runtime.
+All are optional and detected at runtime.
 
 markview.nvim ~
 With `markview = true` (default), toc borrows glyphs and colours from
@@ -239,6 +240,12 @@ nvim-web-devicons ~
 When present, code-block labels gain a coloured language icon
 ("code 1 [<icon> lua]"). Without it the label is "code 1 [lua]". Disable per
 config with `elements.code.lang_glyph = false`.
+
+nvim-treesitter ~
+HTML files parse via treesitter when the `html` parser is installed
+(`:TSInstall html`). Without it, a regex fallback still finds headings,
+links, images and disclosures, but skips tables. Markdown and help never
+need treesitter.
 
 ==============================================================================
 7. HIGHLIGHTS                                                *toc-highlights*
