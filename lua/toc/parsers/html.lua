@@ -90,13 +90,31 @@ end
 
 ---Line scanner for when the html treesitter parser is unavailable.
 function Html:regex()
-  for i, line in ipairs(self:lines()) do
+  local lines = self:lines()
+  local skip_until = 0
+  for i, line in ipairs(lines) do
+    if i <= skip_until then
+      goto continue
+    end
     local hlvl, htext = h.heading(line)
     if hlvl then
       self.head_level = hlvl
       if self:enabled "heading" then
         self:add { lnum = i, level = self.head_level, kind = "heading", text = htext ~= "" and htext or "(untitled)" }
       end
+    elseif self:enabled "table" and line:match "^%s*<[Tt][Aa][Bb][Ll][Ee][%s>]" then
+      -- <table> spans lines; consume to its close (or end-of-buffer) so cells
+      -- are not re-scanned, and label it from the caption/first <th>.
+      local parts, close = { line }, nil
+      for j = i + 1, #lines do
+        parts[#parts + 1] = lines[j]
+        if lines[j]:match "</[Tt][Aa][Bb][Ll][Ee]>" then
+          close = j
+          break
+        end
+      end
+      skip_until = close or #lines
+      self:add { lnum = i, level = self:child_level(), kind = "table", text = h.table_label(table.concat(parts, "\n")) }
     else
       if self:enabled "link" then
         for _, text in ipairs(h.links(line)) do
@@ -119,6 +137,7 @@ function Html:regex()
         end
       end
     end
+    ::continue::
   end
 end
 

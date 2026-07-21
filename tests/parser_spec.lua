@@ -408,6 +408,41 @@ describe("parser: HTML rich elements", function()
   end)
 end)
 
+-- ── parser: HTML regex fallback (no treesitter) ─────────────────────────────
+describe("parser: HTML regex fallback", function()
+  local entries
+  before_each(function()
+    local H = fixture("fallback.html", {
+      "<h1>Doc</h1>",
+      "<table>",
+      "  <caption>Feature matrix</caption>",
+      '  <tr><td><a href="u">cell</a></td></tr>',
+      "</table>",
+    })
+    toc.setup { auto_enabled = false, elements = { table = { enable = true }, link = { enable = true } } }
+    vim.cmd("edit " .. vim.fn.fnameescape(H))
+    vim.bo.filetype = "html"
+    -- Exercise the fallback directly, regardless of whether a treesitter
+    -- HTML parser is installed in this environment.
+    local Html = require "toc.parsers.html"
+    local p = Html.new(0)
+    p:regex()
+    entries = p.entries
+  end)
+
+  it("parses the heading", function()
+    assert.equals("Doc", entries[1].text)
+  end)
+  it("parses a <table> via the fallback, labelled by caption", function()
+    local counts = kind_counts(entries)
+    assert.equals(1, counts.table)
+    assert.equals("Feature matrix", first_by_kind(entries).table.text)
+  end)
+  it("does not leak links from consumed table cells", function()
+    assert.equals(0, kind_counts(entries).link or 0)
+  end)
+end)
+
 -- ── parser: typed elements ──────────────────────────────────────────────────
 describe("parser: typed elements", function()
   local entries
