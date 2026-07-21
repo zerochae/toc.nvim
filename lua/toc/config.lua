@@ -31,7 +31,7 @@ M.defaults = {
   -- Auto-close the TOC when the window switches to a non-markdown file.
   auto_close = true,
   -- Filetypes that auto_enabled and buffer-switch tracking react to.
-  filetypes = { "markdown", "quarto", "rmd", "mdx", "help" },
+  filetypes = { "markdown", "quarto", "rmd", "mdx", "help", "html" },
 
   -- Display mode:
   --   "full"       glyph + number + text

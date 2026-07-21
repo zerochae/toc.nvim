@@ -771,6 +771,17 @@ do
     return view.is_open()
   end, 20)
   ok("TOC auto-opened", view.is_open())
+
+  -- HTML files auto-open too (html is a default filetype).
+  view.close()
+  local H = fixture("auto.html", { "<h1>Title</h1>", "<h2>Sub</h2>" })
+  vim.cmd "silent! %bwipeout!"
+  vim.cmd("edit " .. vim.fn.fnameescape(H))
+  vim.wait(500, function()
+    return view.is_open()
+  end, 20)
+  ok("TOC auto-opened on html", view.is_open())
+  view.close()
 end
 
 -- ── toggle / close ──────────────────────────────────────────────────────────

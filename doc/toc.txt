@@ -36,9 +36,9 @@ The parser dispatches on filetype. Vim help files (filetype "help") are also
 supported: `===` rules start level-1 sections, `---` rules level-2
 subsections, and `Foo ~` lines become subheadings under them. `> ... <` code
 blocks, `Note:` / `WARNING:` lines (callouts) and `*tags*` (anchors) are
-indexed too, each honouring its `elements.<kind>` toggle. Run `:Toc` in a help
-buffer, or add "help" to `filetypes` for auto-open while editing one.
-Additional formats can be added under lua/toc/parsers/.
+indexed too, each honouring its `elements.<kind>` toggle. `help` and `html`
+are default `filetypes`, so the TOC auto-opens while editing them just like
+markdown. Additional formats can be added under lua/toc/parsers/.
 
 Setup: >lua
     require("toc").setup({})
