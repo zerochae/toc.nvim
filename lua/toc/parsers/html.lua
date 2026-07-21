@@ -55,7 +55,12 @@ function Html:treesitter()
       if hn then
         self.head_level = tonumber(hn) or self.head_level
         if self:enabled "heading" then
-          self:add { lnum = lnum, level = self.head_level, kind = "heading", text = inner ~= "" and inner or "(untitled)" }
+          self:add {
+            lnum = lnum,
+            level = self.head_level,
+            kind = "heading",
+            text = inner ~= "" and inner or "(untitled)",
+          }
         end
       elseif tag == "img" and self:enabled "image" then
         local tt = vim.treesitter.get_node_text(container, self.bufnr)

@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  stylua:
+    name: stylua
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install stylua
+        run: |
+          curl -fsSL -o stylua.zip \
+            https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-x86_64.zip
+          unzip -q stylua.zip
+          chmod +x stylua
+      - name: Check formatting
+        run: ./stylua --check lua/ plugin/ tests/
+
+  test:
+    name: test (${{ matrix.neovim }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        neovim: [stable, nightly]
+    steps:
+      - uses: actions/checkout@v5
+      - name: Checkout plenary.nvim
+        uses: actions/checkout@v5
+        with:
+          repository: nvim-lua/plenary.nvim
+          path: .tests/plenary.nvim
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: ${{ matrix.neovim }}
+      - name: Install tree-sitter HTML parser
+        run: |
+          git clone --depth 1 --branch master \
+            https://github.com/nvim-treesitter/nvim-treesitter.git \
+            "$HOME/.local/share/nvim/site/pack/ts/start/nvim-treesitter"
+          nvim --headless "+TSInstallSync! html" "+qa"
+      - name: Run tests
+        run: make test

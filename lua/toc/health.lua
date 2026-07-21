@@ -33,8 +33,21 @@ function M.check()
   table.sort(enabled)
   h.info("indexed elements: " .. (next(enabled) and table.concat(enabled, ", ") or "none"))
 
+  if pcall(require, "nvim-web-devicons") then
+    h.ok "nvim-web-devicons found (code language icons enabled)"
+  else
+    h.info "nvim-web-devicons not found (optional; enables code language icons)"
+  end
+
+  if pcall(require, "markview") then
+    h.ok "markview.nvim found (borrowing glyphs/colours when enabled)"
+  else
+    h.info "markview.nvim not found (optional; borrows heading/checkbox glyphs)"
+  end
+
   h.info "glyphs require a Nerd Font (v3+). If you see boxes, install one and set 'guifont'."
-  h.info "parsing is regex-based; nvim-treesitter is optional and not required."
+  h.info "markdown/help parsing is regex-based (no treesitter needed)."
+  h.info "HTML parsing uses treesitter when available, with a limited regex fallback."
 end
 
 return M

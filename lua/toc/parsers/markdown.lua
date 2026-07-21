@@ -44,7 +44,12 @@ function Markdown:scan(i, line)
       -- Store the full marker; a closing fence must be at least as long (CommonMark).
       self.fence = fence_marker
       if self:enabled "code" then
-        self:add { lnum = i, level = self:child_level(), kind = "code", text = line:match "^%s*[`~]+%s*([%w_%-%+%.]+)" or "code" }
+        self:add {
+          lnum = i,
+          level = self:child_level(),
+          kind = "code",
+          text = line:match "^%s*[`~]+%s*([%w_%-%+%.]+)" or "code",
+        }
       end
     elseif fence_marker:sub(1, 1) == self.fence:sub(1, 1) and #fence_marker >= #self.fence then
       self.fence = nil
@@ -70,7 +75,12 @@ function Markdown:scan(i, line)
     self.head_level = html_level
     if self:enabled "heading" then
       html_text = clean(html_text or "")
-      self:add { lnum = i, level = self.head_level, kind = "heading", text = html_text ~= "" and html_text or "(untitled)" }
+      self:add {
+        lnum = i,
+        level = self.head_level,
+        kind = "heading",
+        text = html_text ~= "" and html_text or "(untitled)",
+      }
     end
     return
   end
@@ -119,7 +129,12 @@ function Markdown:scan(i, line)
 
   if line:match "^%s*|.*|%s*$" and (self.lines[i + 1] or ""):match "^%s*|?[%s:|%-]+%-[%s:|%-]*$" then
     if self:enabled "table" then
-      self:add { lnum = i, level = self:child_level(), kind = "table", text = clean(line:match "^%s*|%s*([^|]-)%s*|" or "table") }
+      self:add {
+        lnum = i,
+        level = self:child_level(),
+        kind = "table",
+        text = clean(line:match "^%s*|%s*([^|]-)%s*|" or "table"),
+      }
     end
     return
   end
@@ -128,15 +143,22 @@ function Markdown:scan(i, line)
   -- Consumed rows are skipped so cell content isn't re-scanned as entries.
   if self:enabled "table" and line:match "^%s*<[Tt][Aa][Bb][Ll][Ee][%s>]" then
     local parts, close = { line }, nil
-    for j = i + 1, math.min(#self.lines, i + 200) do
+    for j = i + 1, #self.lines do
       parts[#parts + 1] = self.lines[j]
       if self.lines[j]:match "</[Tt][Aa][Bb][Ll][Ee]>" then
         close = j
         break
       end
     end
-    self.skip_until = close or i
-    self:add { lnum = i, level = self:child_level(), kind = "table", text = clean(html.table_label(table.concat(parts, "\n"))) }
+    -- An unclosed <table> consumes to end-of-buffer so its cells are never
+    -- re-scanned as stray entries (rather than being silently truncated).
+    self.skip_until = close or #self.lines
+    self:add {
+      lnum = i,
+      level = self:child_level(),
+      kind = "table",
+      text = clean(html.table_label(table.concat(parts, "\n"))),
+    }
     return
   end
 

@@ -223,21 +223,70 @@ local function derive_markview()
   return next(derived) and derived or nil
 end
 
----Resolve `preset` (a name or an inline table) to a partial config.
+---@param msg string
+local function warn(msg)
+  vim.notify("toc.nvim: " .. msg, vim.log.levels.WARN)
+end
+
+---Resolve `preset` (a name or an inline table) to a partial config. An unknown
+---name or a wrong type warns and falls back to no preset rather than failing.
 ---@param preset string|toc.Config|nil
 ---@return toc.Config
 local function resolve_preset(preset)
   if type(preset) == "string" then
     local ok, presets = pcall(require, "toc.presets")
-    return (ok and type(presets[preset]) == "table") and presets[preset] or {}
+    if ok and type(presets[preset]) == "table" then
+      return presets[preset]
+    end
+    local names = {}
+    for name, spec in pairs(ok and presets or {}) do
+      if type(spec) == "table" then
+        names[#names + 1] = name
+      end
+    end
+    table.sort(names)
+    warn(("unknown preset %q (available: %s)"):format(preset, table.concat(names, ", ")))
+    return {}
   elseif type(preset) == "table" then
     return preset
+  elseif preset ~= nil then
+    warn "`preset` must be a string name or a config table"
+    return {}
   end
   return {}
 end
 
+-- Allowed values for the small set of enum-like options; anything else warns.
+local ENUMS = {
+  mode = { full = true, ["glyph-only"] = true, ["text-only"] = true, minimal = true },
+  position = { left = true, right = true },
+  numbers = { level = true, nested = true, flat = true, none = true },
+}
+
+---Shallow sanity check on the merged options: warn (never error) on values that
+---would otherwise misbehave silently.
+---@param o toc.Config
+local function validate(o)
+  if o.mode ~= nil and not ENUMS.mode[o.mode] then
+    warn(("invalid mode %s (expected full|glyph-only|text-only|minimal)"):format(vim.inspect(o.mode)))
+  end
+  if o.position ~= nil and not ENUMS.position[o.position] then
+    warn(("invalid position %s (expected left|right)"):format(vim.inspect(o.position)))
+  end
+  if o.numbers ~= nil and o.numbers ~= false and not ENUMS.numbers[o.numbers] then
+    warn(("invalid numbers %s (expected level|nested|flat|none|false)"):format(vim.inspect(o.numbers)))
+  end
+  if o.width ~= nil and o.width ~= "auto" and type(o.width) ~= "number" then
+    warn(('invalid width %s (expected a number or "auto")'):format(vim.inspect(o.width)))
+  end
+end
+
 ---@param opts? toc.Config partial configuration, deep-merged over the defaults
 function M.setup(opts)
+  if opts ~= nil and type(opts) ~= "table" then
+    warn "setup() expects a table of options"
+    opts = {}
+  end
   ---@type toc.Config
   local o = opts or {}
   local preset = resolve_preset(o.preset)
@@ -261,6 +310,7 @@ function M.setup(opts)
   end
   merged = vim.tbl_deep_extend("force", merged, preset)
   M.options = vim.tbl_deep_extend("force", merged, o)
+  validate(M.options)
   return M.options
 end
 
