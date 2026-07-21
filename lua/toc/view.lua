@@ -260,9 +260,13 @@ function View:debounced_refresh()
     return
   end
   refresh_timer:stop()
-  refresh_timer:start(ms, 0, vim.schedule_wrap(function()
-    self:refresh()
-  end))
+  refresh_timer:start(
+    ms,
+    0,
+    vim.schedule_wrap(function()
+      self:refresh()
+    end)
+  )
 end
 
 function View:set_keymaps()
