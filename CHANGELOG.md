@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/zerochae/toc.nvim/compare/v1.0.0...v1.0.1) (2026-07-21)
+
+
+### Bug Fixes
+
+* parse HTML tables in the regex fallback without treesitter ([#8](https://github.com/zerochae/toc.nvim/issues/8)) ([a4dccd8](https://github.com/zerochae/toc.nvim/commit/a4dccd8cc26ca0e567733f8a5427713c65251bbf))
+
 ## 1.0.0 (2026-07-21)
 
 
