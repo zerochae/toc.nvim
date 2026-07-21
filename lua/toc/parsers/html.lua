@@ -1,5 +1,8 @@
 local config = require "toc.config"
 
+-- HTML extraction shared by the markdown parser (inline HTML) and the html
+-- filetype parser. `heading`/`images`/`links` are line-level regex helpers;
+-- `parse` is the full html-buffer parser (treesitter, regex fallback).
 local M = {}
 
 ---@param kind string
@@ -12,14 +15,14 @@ end
 ---@param tagtext string a single tag's source ("<img alt='x' ...>")
 ---@param name string attribute name
 ---@return string|nil
-local function attr(tagtext, name)
+function M.attr(tagtext, name)
   return tagtext:match(name .. '%s*=%s*"([^"]*)"') or tagtext:match(name .. "%s*=%s*'([^']*)'")
 end
 
----Strip tags/entities and collapse whitespace to a plain title.
+---Strip tags and collapse whitespace to a plain title.
 ---@param s string
 ---@return string
-local function flatten(s)
+function M.flatten(s)
   s = s:gsub("<[^>]*>", " ")
   s = s:gsub("%s+", " ")
   s = s:gsub("^%s+", "")
@@ -27,10 +30,67 @@ local function flatten(s)
   return s
 end
 
--- Attributes and inner text come from each element's own (small) source text,
--- where a regex is reliable; treesitter only supplies structure and position.
+-- ── line-level helpers (also used for inline HTML inside markdown) ──────────
+
+---A full-line `<hN ...>text</hN>` (or lone `<hN ...>`) heading.
+---@param line string
+---@return integer|nil level, string? text
+function M.heading(line)
+  local lvl, inner = line:match "^%s*<[Hh]([1-6])[^>]*>(.-)</[Hh][1-6]>"
+  if not lvl then
+    lvl, inner = line:match "^%s*<[Hh]([1-6])[^>]*>%s*$", ""
+  end
+  if not lvl then
+    return nil
+  end
+  return tonumber(lvl), M.flatten(inner or "")
+end
+
+---Alt (or src filename) for each `<img>` on the line.
+---@param line string
+---@return string[]
+function M.images(line)
+  local out = {}
+  for tag in line:gmatch "<[Ii][Mm][Gg]%s[^>]*>" do
+    local alt = M.attr(tag, "alt")
+    if not alt or alt == "" then
+      local src = M.attr(tag, "src")
+      alt = (src and src:match "([^/]+)$") or "image"
+    end
+    out[#out + 1] = alt
+  end
+  return out
+end
+
+---Text (or href fallback) for each `<a ...>...</a>` on the line.
+---@param line string
+---@return string[]
+function M.links(line)
+  local out = {}
+  for tag, inner in line:gmatch "(<[Aa]%s[^>]*>)(.-)</[Aa]>" do
+    local text = M.flatten(inner)
+    if text == "" then
+      text = M.attr(tag, "href") or "link"
+    end
+    out[#out + 1] = text
+  end
+  return out
+end
+
+-- ── full html-buffer parsers ────────────────────────────────────────────────
+
+-- tag_name -> element kind for non-heading tags handled by treesitter.
+local TS_KIND = {
+  a = "link",
+  img = "image",
+  blockquote = "callout",
+  pre = "code",
+  li = "bullet",
+}
+
+---Structure and positions from treesitter; attrs/text from each node's source.
 ---@param bufnr integer
----@return TocEntry[]|nil nil if the html parser is unavailable
+---@return TocEntry[]|nil nil when the html parser is unavailable
 local function parse_treesitter(bufnr)
   local ok, obj = pcall(vim.treesitter.get_parser, bufnr, "html")
   if not ok or not obj then
@@ -60,37 +120,45 @@ local function parse_treesitter(bufnr)
       local tag = vim.treesitter.get_node_text(node, bufnr):lower()
       local lnum = container:start() + 1
       local element = container:parent()
+      local inner = (element and element:type() == "element")
+          and M.flatten(vim.treesitter.get_node_text(element, bufnr))
+        or ""
       local hn = tag:match "^h([1-6])$"
+
       if hn then
         head_level = tonumber(hn) or head_level
         if enabled "heading" then
-          local text = (element and element:type() == "element") and flatten(vim.treesitter.get_node_text(element, bufnr))
-            or ""
-          add { lnum = lnum, level = head_level, kind = "heading", text = text ~= "" and text or "(untitled)" }
+          add { lnum = lnum, level = head_level, kind = "heading", text = inner ~= "" and inner or "(untitled)" }
         end
-      elseif tag == "a" and enabled "link" then
-        local text = (element and element:type() == "element") and flatten(vim.treesitter.get_node_text(element, bufnr))
-          or ""
-        if text == "" then
-          text = attr(vim.treesitter.get_node_text(container, bufnr), "href") or "link"
-        end
-        add { lnum = lnum, level = head_level + 1, kind = "link", text = text }
       elseif tag == "img" and enabled "image" then
         local tt = vim.treesitter.get_node_text(container, bufnr)
-        local alt = attr(tt, "alt")
+        local alt = M.attr(tt, "alt")
         if not alt or alt == "" then
-          local src = attr(tt, "src")
+          local src = M.attr(tt, "src")
           alt = (src and src:match "([^/]+)$") or "image"
         end
         add { lnum = lnum, level = head_level + 1, kind = "image", text = alt }
+      elseif tag == "a" and enabled "link" then
+        local text = inner
+        if text == "" then
+          text = M.attr(vim.treesitter.get_node_text(container, bufnr), "href") or "link"
+        end
+        add { lnum = lnum, level = head_level + 1, kind = "link", text = text }
+      elseif TS_KIND[tag] and enabled(TS_KIND[tag]) then
+        local kind = TS_KIND[tag]
+        local text = kind == "code" and "code" or (inner ~= "" and inner or kind)
+        local entry = { lnum = lnum, level = head_level + 1, kind = kind, text = text }
+        if kind == "callout" then
+          entry.label = "quote"
+        end
+        add(entry)
       end
     end
   end
   return entries
 end
 
--- Line-based fallback for when the html treesitter parser is unavailable;
--- handles the common single-line cases.
+---Line scanner for when the html treesitter parser is unavailable.
 ---@param bufnr integer
 ---@return TocEntry[]
 local function parse_regex(bufnr)
@@ -103,30 +171,22 @@ local function parse_regex(bufnr)
   end
 
   for i, line in ipairs(lines) do
-    for hn, inner in line:gmatch "<[Hh]([1-6])[^>]*>(.-)</[Hh][1-6]>" do
-      head_level = tonumber(hn) or head_level
+    local hlvl, htext = M.heading(line)
+    if hlvl then
+      head_level = hlvl
       if enabled "heading" then
-        local text = flatten(inner)
-        add { lnum = i, level = head_level, kind = "heading", text = text ~= "" and text or "(untitled)" }
+        add { lnum = i, level = head_level, kind = "heading", text = htext ~= "" and htext or "(untitled)" }
       end
-    end
-    if enabled "link" then
-      for tag, inner in line:gmatch "(<[Aa]%s[^>]*>)(.-)</[Aa]>" do
-        local text = flatten(inner)
-        if text == "" then
-          text = attr(tag, "href") or "link"
+    else
+      if enabled "link" then
+        for _, text in ipairs(M.links(line)) do
+          add { lnum = i, level = head_level + 1, kind = "link", text = text }
         end
-        add { lnum = i, level = head_level + 1, kind = "link", text = text }
       end
-    end
-    if enabled "image" then
-      for tag in line:gmatch "<[Ii][Mm][Gg]%s[^>]*>" do
-        local alt = attr(tag, "alt")
-        if not alt or alt == "" then
-          local src = attr(tag, "src")
-          alt = (src and src:match "([^/]+)$") or "image"
+      if enabled "image" then
+        for _, text in ipairs(M.images(line)) do
+          add { lnum = i, level = head_level + 1, kind = "image", text = text }
         end
-        add { lnum = i, level = head_level + 1, kind = "image", text = alt }
       end
     end
   end

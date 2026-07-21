@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>toc.nvim HTML demo</title>
+  </head>
+  <body>
+    <h1>toc.nvim HTML Demo</h1>
+    <p>
+      Open this file and run <a href="#usage">:Toc</a> to see headings,
+      links, images, blockquotes, code, and list items in the panel.
+    </p>
+
+    <h2 id="overview">Overview</h2>
+    <p>The HTML parser reads structure from treesitter when available.</p>
+    <img alt="architecture diagram" src="assets/architecture.png" />
+    <img src="assets/no-alt-fallback.png" />
+
+    <h2 id="usage">Usage</h2>
+    <h3>Opening the panel</h3>
+    <blockquote>Tip: the panel mirrors your document outline.</blockquote>
+    <pre><code>require("toc").setup {}
+:Toc</code></pre>
+
+    <h3>Keymaps</h3>
+    <ul>
+      <li>Enter jumps to the entry</li>
+      <li>q closes the panel</li>
+      <li>See the <a href="https://github.com">project page</a></li>
+    </ul>
+
+    <h2 id="elements">Elements</h2>
+    <h4>Headings</h4>
+    <p>All of <code>h1</code> through <code>h6</code> are indexed.</p>
+    <h5>Deep heading</h5>
+    <h6>Deepest heading</h6>
+  </body>
+</html>

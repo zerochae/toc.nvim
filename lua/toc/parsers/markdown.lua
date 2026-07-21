@@ -1,4 +1,5 @@
 local config = require "toc.config"
+local html = require "toc.parsers.html"
 
 local M = {}
 
@@ -68,16 +69,12 @@ function M.parse(bufnr)
       return
     end
 
-    -- Raw HTML headings, e.g. <h2 id="x">Title</h2>.
-    local html_level, html_text = line:match "^%s*<[Hh]([1-6])[^>]*>(.-)</[Hh][1-6]>"
-    if not html_level then
-      html_level = line:match "^%s*<[Hh]([1-6])[^>]*>%s*$"
-      html_text = ""
-    end
+    -- Raw HTML headings, e.g. <h2 id="x">Title</h2> (shared with the html parser).
+    local html_level, html_text = html.heading(line)
     if html_level then
-      head_level = tonumber(html_level) or head_level
+      head_level = html_level
       if on("heading") then
-        add { lnum = i, level = head_level, kind = "heading", text = clean(html_text) }
+        add { lnum = i, level = head_level, kind = "heading", text = html_text ~= "" and html_text or "(untitled)" }
       end
       return
     end
@@ -141,13 +138,8 @@ function M.parse(bufnr)
       for alt in line:gmatch "!%[([^%]]*)%]%b()" do
         add { lnum = i, level = inline_level, kind = "image", text = alt ~= "" and alt or "image" }
       end
-      -- HTML <img ...> tags: prefer alt, else the src filename.
-      for tag in line:gmatch "<[Ii][Mm][Gg]%s[^>]*>" do
-        local alt = tag:match "[Aa][Ll][Tt]%s*=%s*\"([^\"]*)\"" or tag:match "[Aa][Ll][Tt]%s*=%s*'([^']*)'"
-        if not alt or alt == "" then
-          local src = tag:match "[Ss][Rr][Cc]%s*=%s*\"([^\"]*)\"" or tag:match "[Ss][Rr][Cc]%s*=%s*'([^']*)'"
-          alt = src and src:match "([^/]+)$" or "image"
-        end
+      -- HTML <img> tags (shared with the html parser).
+      for _, alt in ipairs(html.images(line)) do
         add { lnum = i, level = inline_level, kind = "image", text = alt }
       end
     end
@@ -158,6 +150,10 @@ function M.parse(bufnr)
       local lead = line:match "^%[([^%]]+)%]%b()"
       if lead then
         add { lnum = i, level = inline_level, kind = "link", text = clean(lead) }
+      end
+      -- HTML <a href> links (shared with the html parser).
+      for _, text in ipairs(html.links(line)) do
+        add { lnum = i, level = inline_level, kind = "link", text = text }
       end
     end
     if bullet then

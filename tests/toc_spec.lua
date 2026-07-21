@@ -230,6 +230,24 @@ do
   eq("html h3 level", h[3].level, 3)
 end
 
+-- ── parser: inline HTML in markdown shares the html scanner ─────────────────
+print "html inline in markdown"
+do
+  local E = fixture("inline.md", {
+    "# Title",
+    '<p>see <a href="u">the guide</a></p>',
+    '<img alt="diagram" src="d/e.png">',
+  })
+  toc.setup { auto_enabled = false, elements = { link = { enable = true }, image = { enable = true } } }
+  vim.cmd("edit " .. vim.fn.fnameescape(E))
+  local kinds = {}
+  for _, e in ipairs(parser.parse(0)) do
+    kinds[e.kind] = (kinds[e.kind] or 0) + 1
+  end
+  ok("inline <a> link parsed in markdown", (kinds.link or 0) == 1)
+  ok("inline <img> image parsed in markdown", (kinds.image or 0) == 1)
+end
+
 -- ── parser dispatches on filetype: HTML (regex fallback path) ───────────────
 print "html filetype"
 do
