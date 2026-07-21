@@ -24,6 +24,7 @@ function M.parse(bufnr)
   local el = config.options.elements
   local entries = {}
   local fence = nil
+  local skip_until = 0
   local head_level = 0
 
   ---@param kind string
@@ -43,6 +44,10 @@ function M.parse(bufnr)
 
   -- Process one line; a bare `return` skips the rest (acts like `continue`).
   local function scan(i, line)
+    if i <= skip_until then
+      return
+    end
+
     local fence_marker = line:match "^%s*(```+)" or line:match "^%s*(~~~+)"
     if fence_marker then
       if not fence then
@@ -74,6 +79,7 @@ function M.parse(bufnr)
     if html_level then
       head_level = html_level
       if on("heading") then
+        html_text = clean(html_text or "")
         add { lnum = i, level = head_level, kind = "heading", text = html_text ~= "" and html_text or "(untitled)" }
       end
       return
@@ -129,15 +135,18 @@ function M.parse(bufnr)
     end
 
     -- HTML <table> (spans lines): label from its caption/first <th> (shared).
+    -- Consumed rows are skipped so cell content isn't re-scanned as entries.
     if on("table") and line:match "^%s*<[Tt][Aa][Bb][Ll][Ee][%s>]" then
-      local block = line
-      for j = i + 1, #lines do
-        block = block .. "\n" .. lines[j]
+      local parts, close = { line }, nil
+      for j = i + 1, math.min(#lines, i + 200) do
+        parts[#parts + 1] = lines[j]
         if lines[j]:match "</[Tt][Aa][Bb][Ll][Ee]>" then
+          close = j
           break
         end
       end
-      add { lnum = i, level = child_level(), kind = "table", text = html.table_label(block) }
+      skip_until = close or i
+      add { lnum = i, level = child_level(), kind = "table", text = clean(html.table_label(table.concat(parts, "\n"))) }
       return
     end
 
@@ -153,7 +162,7 @@ function M.parse(bufnr)
       end
       -- HTML <img> tags (shared with the html parser).
       for _, alt in ipairs(html.images(line)) do
-        add { lnum = i, level = inline_level, kind = "image", text = alt }
+        add { lnum = i, level = inline_level, kind = "image", text = clean(alt) }
       end
     end
     if on("link") then
@@ -166,17 +175,17 @@ function M.parse(bufnr)
       end
       -- HTML <a href> links (shared with the html parser).
       for _, text in ipairs(html.links(line)) do
-        add { lnum = i, level = inline_level, kind = "link", text = text }
+        add { lnum = i, level = inline_level, kind = "link", text = clean(text) }
       end
     end
     if on("summary") then
       for _, text in ipairs(html.summaries(line)) do
-        add { lnum = i, level = inline_level, kind = "summary", text = text }
+        add { lnum = i, level = inline_level, kind = "summary", text = clean(text) }
       end
     end
     if on("definition") then
       for _, text in ipairs(html.terms(line)) do
-        add { lnum = i, level = inline_level, kind = "definition", text = text }
+        add { lnum = i, level = inline_level, kind = "definition", text = clean(text) }
       end
     end
     if bullet then

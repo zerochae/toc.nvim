@@ -248,6 +248,41 @@ do
   ok("inline <img> image parsed in markdown", (kinds.image or 0) == 1)
 end
 
+-- ── parser: markdown-embedded HTML headings are cleaned of markdown syntax ───
+print "html heading cleaning"
+do
+  local E = fixture("clean.md", {
+    "<h2>Hello **world** and `code`</h2>",
+    "<h3>[Link](url)</h3>",
+  })
+  toc.setup { auto_enabled = false, elements = vim.deepcopy(HEADINGS_ONLY) }
+  vim.cmd("edit " .. vim.fn.fnameescape(E))
+  local h = parser.parse(0)
+  eq("markdown emphasis stripped from HTML heading", h[1].text, "Hello world and code")
+  eq("markdown link stripped from HTML heading", h[2].text, "Link")
+end
+
+-- ── parser: HTML table cell content does not leak as separate entries ────────
+print "html table no leak"
+do
+  local E = fixture("leak.md", {
+    "# Title",
+    "<table>",
+    '  <caption>Refs</caption>',
+    '  <tr><td><a href="u">cell link</a></td></tr>',
+    "</table>",
+    "after",
+  })
+  toc.setup { auto_enabled = false, elements = { table = { enable = true }, link = { enable = true } } }
+  vim.cmd("edit " .. vim.fn.fnameescape(E))
+  local by_kind = {}
+  for _, e in ipairs(parser.parse(0)) do
+    by_kind[e.kind] = (by_kind[e.kind] or 0) + 1
+  end
+  eq("one table entry", by_kind.table, 1)
+  ok("no link leaked from table cell", (by_kind.link or 0) == 0)
+end
+
 -- ── parser: multiline inline HTML in markdown (details, table, dl) ───────────
 print "html blocks in markdown"
 do

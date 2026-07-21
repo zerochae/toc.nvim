@@ -12,11 +12,29 @@ local function enabled(kind)
   return el ~= nil and el.enable
 end
 
+---A case-insensitive pattern fragment for a literal tag name ("a" -> "[Aa]").
+---@param tag string
+---@return string
+local function ci(tag)
+  return (tag:gsub("%a", function(c)
+    return "[" .. c:upper() .. c:lower() .. "]"
+  end))
+end
+
+-- Precomputed tag patterns (built once; case-insensitive, void- or paired-tag).
+local P_IMG = "<" .. ci "img" .. "%s[^>]*>"
+local P_A = "(<" .. ci "a" .. "%s[^>]*>)(.-)</" .. ci "a" .. ">"
+local P_SUMMARY = "<" .. ci "summary" .. "[^>]*>(.-)</" .. ci "summary" .. ">"
+local P_DT = "<" .. ci "dt" .. "[^>]*>(.-)</" .. ci "dt" .. ">"
+local P_CAPTION = "<" .. ci "caption" .. "[^>]*>(.-)</" .. ci "caption" .. ">"
+local P_TH = "<" .. ci "th" .. "[^>]*>(.-)</" .. ci "th" .. ">"
+
 ---@param tagtext string a single tag's source ("<img alt='x' ...>")
 ---@param name string attribute name
 ---@return string|nil
 function M.attr(tagtext, name)
-  return tagtext:match(name .. '%s*=%s*"([^"]*)"') or tagtext:match(name .. "%s*=%s*'([^']*)'")
+  -- The leading %s keeps `alt` from matching inside `data-alt`, etc.
+  return tagtext:match("%s" .. name .. '%s*=%s*"([^"]*)"') or tagtext:match("%s" .. name .. "%s*=%s*'([^']*)'")
 end
 
 ---Strip tags and collapse whitespace to a plain title.
@@ -28,6 +46,18 @@ function M.flatten(s)
   s = s:gsub("^%s+", "")
   s = s:gsub("%s+$", "")
   return s
+end
+
+---Alt text, else the src filename, else "image", for one `<img>` tag's source.
+---@param tagtext string
+---@return string
+local function img_label(tagtext)
+  local alt = M.attr(tagtext, "alt")
+  if alt and alt ~= "" then
+    return alt
+  end
+  local src = M.attr(tagtext, "src")
+  return (src and src:match "([^/]+)$") or "image"
 end
 
 -- ── line-level helpers (also used for inline HTML inside markdown) ──────────
@@ -51,13 +81,8 @@ end
 ---@return string[]
 function M.images(line)
   local out = {}
-  for tag in line:gmatch "<[Ii][Mm][Gg]%s[^>]*>" do
-    local alt = M.attr(tag, "alt")
-    if not alt or alt == "" then
-      local src = M.attr(tag, "src")
-      alt = (src and src:match "([^/]+)$") or "image"
-    end
-    out[#out + 1] = alt
+  for tag in line:gmatch(P_IMG) do
+    out[#out + 1] = img_label(tag)
   end
   return out
 end
@@ -67,12 +92,9 @@ end
 ---@return string[]
 function M.links(line)
   local out = {}
-  for tag, inner in line:gmatch "(<[Aa]%s[^>]*>)(.-)</[Aa]>" do
+  for tag, inner in line:gmatch(P_A) do
     local text = M.flatten(inner)
-    if text == "" then
-      text = M.attr(tag, "href") or "link"
-    end
-    out[#out + 1] = text
+    out[#out + 1] = text ~= "" and text or (M.attr(tag, "href") or "link")
   end
   return out
 end
@@ -82,8 +104,9 @@ end
 ---@return string[]
 function M.summaries(line)
   local out = {}
-  for inner in line:gmatch "<[Ss][Uu][Mm][Mm][Aa][Rr][Yy][^>]*>(.-)</[Ss][Uu][Mm][Mm][Aa][Rr][Yy]>" do
-    out[#out + 1] = M.flatten(inner) ~= "" and M.flatten(inner) or "summary"
+  for inner in line:gmatch(P_SUMMARY) do
+    local text = M.flatten(inner)
+    out[#out + 1] = text ~= "" and text or "summary"
   end
   return out
 end
@@ -93,8 +116,9 @@ end
 ---@return string[]
 function M.terms(line)
   local out = {}
-  for inner in line:gmatch "<[Dd][Tt][^>]*>(.-)</[Dd][Tt]>" do
-    out[#out + 1] = M.flatten(inner) ~= "" and M.flatten(inner) or "term"
+  for inner in line:gmatch(P_DT) do
+    local text = M.flatten(inner)
+    out[#out + 1] = text ~= "" and text or "term"
   end
   return out
 end
@@ -103,13 +127,13 @@ end
 ---@param html_text string the table element's source
 ---@return string
 function M.table_label(html_text)
-  local cap = html_text:match "<[Cc][Aa][Pp][Tt][Ii][Oo][Nn][^>]*>(.-)</[Cc][Aa][Pp][Tt][Ii][Oo][Nn]>"
-  if cap and M.flatten(cap) ~= "" then
-    return M.flatten(cap)
+  local cap = M.flatten(html_text:match(P_CAPTION) or "")
+  if cap ~= "" then
+    return cap
   end
-  local th = html_text:match "<[Tt][Hh][^>]*>(.-)</[Tt][Hh]>"
-  if th and M.flatten(th) ~= "" then
-    return M.flatten(th)
+  local th = M.flatten(html_text:match(P_TH) or "")
+  if th ~= "" then
+    return th
   end
   return "table"
 end
@@ -170,12 +194,7 @@ local function parse_treesitter(bufnr)
         end
       elseif tag == "img" and enabled "image" then
         local tt = vim.treesitter.get_node_text(container, bufnr)
-        local alt = M.attr(tt, "alt")
-        if not alt or alt == "" then
-          local src = M.attr(tt, "src")
-          alt = (src and src:match "([^/]+)$") or "image"
-        end
-        add { lnum = lnum, level = head_level + 1, kind = "image", text = alt }
+        add { lnum = lnum, level = head_level + 1, kind = "image", text = img_label(tt) }
       elseif tag == "a" and enabled "link" then
         local text = inner
         if text == "" then
