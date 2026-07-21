@@ -46,7 +46,8 @@ function M.check()
   end
 
   h.info "glyphs require a Nerd Font (v3+). If you see boxes, install one and set 'guifont'."
-  h.info "parsing is regex-based; nvim-treesitter is optional and not required."
+  h.info "markdown/help parsing is regex-based (no treesitter needed)."
+  h.info "HTML parsing uses treesitter when available, with a limited regex fallback."
 end
 
 return M
