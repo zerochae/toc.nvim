@@ -205,10 +205,29 @@ function Markdown:scan(i, line)
   end
 end
 
+---A leading YAML (`---`) or TOML (`+++`) front matter block spans line 1 to its
+---closing fence; its keys/values must not be scanned as entries.
+---@return integer lines consumed (0 when there is no front matter)
+function Markdown:front_matter()
+  local open = self.lines[1] and self.lines[1]:match "^(%-%-%-)%s*$"
+  open = open or (self.lines[1] and self.lines[1]:match "^(%+%+%+)%s*$")
+  if not open then
+    return 0
+  end
+  for j = 2, #self.lines do
+    if self.lines[j]:gsub("%s+$", "") == open then
+      return j
+    end
+  end
+  -- Unclosed: leave the buffer alone rather than swallowing all of it.
+  return 0
+end
+
 ---Scan a Markdown buffer line-by-line, emitting typed entries (unsorted).
 ---@return TocEntry[]
 function Markdown:parse()
   self.lines = self:lines()
+  self.skip_until = self:front_matter()
   for i, line in ipairs(self.lines) do
     self:scan(i, line)
   end

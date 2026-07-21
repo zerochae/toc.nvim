@@ -40,6 +40,63 @@ describe("parser (headings only)", function()
   end)
 end)
 
+-- ── parser: front matter ────────────────────────────────────────────────────
+describe("parser: front matter", function()
+  it("skips a leading YAML (---) front matter block", function()
+    local F = fixture("fm-yaml.md", {
+      "---",
+      "title: Doc",
+      "see: [x](http://y)",
+      "---",
+      "# Real Heading",
+    })
+    toc.setup { auto_enabled = false, elements = { heading = { enable = true }, link = { enable = true } } }
+    vim.cmd("edit " .. vim.fn.fnameescape(F))
+    local entries = parser.parse(0)
+    assert.equals(0, kind_counts(entries).link or 0)
+    assert.equals(1, kind_counts(entries).heading)
+    assert.equals("Real Heading", entries[1].text)
+  end)
+
+  it("skips a leading TOML (+++) front matter block", function()
+    local F = fixture("fm-toml.md", {
+      "+++",
+      'title = "Doc"',
+      "+++",
+      "# Real Heading",
+    })
+    toc.setup { auto_enabled = false, elements = vim.deepcopy(HEADINGS_ONLY) }
+    vim.cmd("edit " .. vim.fn.fnameescape(F))
+    local entries = parser.parse(0)
+    assert.equals(1, #entries)
+    assert.equals("Real Heading", entries[1].text)
+  end)
+
+  it("leaves an unclosed --- alone (no front matter)", function()
+    local F = fixture("fm-open.md", {
+      "---",
+      "# Still A Heading",
+    })
+    toc.setup { auto_enabled = false, elements = vim.deepcopy(HEADINGS_ONLY) }
+    vim.cmd("edit " .. vim.fn.fnameescape(F))
+    local entries = parser.parse(0)
+    assert.equals("Still A Heading", entries[1].text)
+  end)
+
+  it("does not treat a setext H2 rule as front matter", function()
+    local F = fixture("fm-setext.md", {
+      "Title Line",
+      "---",
+      "## Sub",
+    })
+    toc.setup { auto_enabled = false, elements = vim.deepcopy(HEADINGS_ONLY) }
+    vim.cmd("edit " .. vim.fn.fnameescape(F))
+    local entries = parser.parse(0)
+    assert.equals("Title Line", entries[1].text)
+    assert.equals(2, entries[1].level)
+  end)
+end)
+
 -- ── parser: nested fences (4-backtick wrapping 3-backtick) ──────────────────
 describe("parser: nested fences", function()
   local entries
