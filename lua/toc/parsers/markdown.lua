@@ -1,7 +1,21 @@
-local config = require "toc.config"
-local html = require "toc.parsers.html"
+local Parser = require "toc.parsers.base"
+local html = require "toc.parsers.html_utils"
 
-local M = {}
+---@class Markdown : Parser
+---@field lines string[]
+---@field fence string|nil the open fence marker, if inside a code fence
+---@field skip_until integer lines up to here are consumed (e.g. an HTML table)
+local Markdown = setmetatable({}, { __index = Parser })
+Markdown.__index = Markdown
+
+---@param bufnr integer
+---@return Markdown
+function Markdown.new(bufnr)
+  local self = Parser.new(bufnr) --[[@as Markdown]]
+  self.fence = nil
+  self.skip_until = 0
+  return setmetatable(self, Markdown)
+end
 
 ---@param text string
 ---@return string
@@ -16,187 +30,167 @@ local function clean(text)
   return text
 end
 
----Scan a Markdown buffer line-by-line, emitting typed entries (unsorted).
----@param bufnr integer
----@return TocEntry[]
-function M.parse(bufnr)
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local el = config.options.elements
-  local entries = {}
-  local fence = nil
-  local skip_until = 0
-  local head_level = 0
-
-  ---@param kind string
-  ---@return boolean
-  local function on(kind)
-    return el[kind] ~= nil and el[kind].enable
+-- Process one line; a bare `return` skips the rest (acts like `continue`).
+---@param i integer
+---@param line string
+function Markdown:scan(i, line)
+  if i <= self.skip_until then
+    return
   end
 
-  -- Non-heading elements nest one level below the current heading.
-  local function child_level(extra)
-    return head_level + 1 + (extra or 0)
+  local fence_marker = line:match "^%s*(```+)" or line:match "^%s*(~~~+)"
+  if fence_marker then
+    if not self.fence then
+      -- Store the full marker; a closing fence must be at least as long (CommonMark).
+      self.fence = fence_marker
+      if self:enabled "code" then
+        self:add { lnum = i, level = self:child_level(), kind = "code", text = line:match "^%s*[`~]+%s*([%w_%-%+%.]+)" or "code" }
+      end
+    elseif fence_marker:sub(1, 1) == self.fence:sub(1, 1) and #fence_marker >= #self.fence then
+      self.fence = nil
+    end
+    return
   end
-  local function add(entry)
-    entry.ord = #entries + 1 -- preserves document order for a stable sort
-    entries[#entries + 1] = entry
+  if self.fence then
+    return
   end
 
-  -- Process one line; a bare `return` skips the rest (acts like `continue`).
-  local function scan(i, line)
-    if i <= skip_until then
-      return
+  local hashes, rest = line:match "^(#+)%s+(.*)$"
+  if hashes and #hashes <= 6 then
+    self.head_level = #hashes
+    if self:enabled "heading" then
+      self:add { lnum = i, level = self.head_level, kind = "heading", text = clean(rest) }
     end
+    return
+  end
 
-    local fence_marker = line:match "^%s*(```+)" or line:match "^%s*(~~~+)"
-    if fence_marker then
-      if not fence then
-        -- Store the full marker; a closing fence must be at least as long (CommonMark).
-        fence = fence_marker
-        if on("code") then
-          add { lnum = i, level = child_level(), kind = "code", text = line:match "^%s*[`~]+%s*([%w_%-%+%.]+)" or "code" }
-        end
-      elseif fence_marker:sub(1, 1) == fence:sub(1, 1) and #fence_marker >= #fence then
-        fence = nil
-      end
-      return
+  -- Raw HTML headings, e.g. <h2 id="x">Title</h2> (shared with the html parser).
+  local html_level, html_text = html.heading(line)
+  if html_level then
+    self.head_level = html_level
+    if self:enabled "heading" then
+      html_text = clean(html_text or "")
+      self:add { lnum = i, level = self.head_level, kind = "heading", text = html_text ~= "" and html_text or "(untitled)" }
     end
-    if fence then
-      return
-    end
+    return
+  end
 
-    local hashes, rest = line:match "^(#+)%s+(.*)$"
-    if hashes and #hashes <= 6 then
-      head_level = #hashes
-      if on("heading") then
-        add { lnum = i, level = head_level, kind = "heading", text = clean(rest) }
-      end
-      return
+  local nextline = self.lines[i + 1]
+  if nextline and #line:gsub("%s", "") > 0 and not line:match "^%s*[>|%-%*%+#]" then
+    local setext_level
+    if nextline:match "^%s*=+%s*$" then
+      setext_level = 1
+    elseif nextline:match "^%s*%-%-%-+%s*$" then
+      setext_level = 2
     end
-
-    -- Raw HTML headings, e.g. <h2 id="x">Title</h2> (shared with the html parser).
-    local html_level, html_text = html.heading(line)
-    if html_level then
-      head_level = html_level
-      if on("heading") then
-        html_text = clean(html_text or "")
-        add { lnum = i, level = head_level, kind = "heading", text = html_text ~= "" and html_text or "(untitled)" }
+    if setext_level then
+      self.head_level = setext_level
+      if self:enabled "heading" then
+        self:add { lnum = i, level = setext_level, kind = "heading", text = clean(line) }
       end
       return
-    end
-
-    local nextline = lines[i + 1]
-    if nextline and #line:gsub("%s", "") > 0 and not line:match "^%s*[>|%-%*%+#]" then
-      local setext_level
-      if nextline:match "^%s*=+%s*$" then
-        setext_level = 1
-      elseif nextline:match "^%s*%-%-%-+%s*$" then
-        setext_level = 2
-      end
-      if setext_level then
-        head_level = setext_level
-        if on("heading") then
-          add { lnum = i, level = setext_level, kind = "heading", text = clean(line) }
-        end
-        return
-      end
-    end
-
-    local t_indent, t_mark, t_rest = line:match "^(%s*)[%-%*%+]%s+%[(.)%]%s+(.*)$"
-    if t_mark then
-      if on("task") then
-        add {
-          lnum = i,
-          level = child_level(math.floor(#t_indent / 2)),
-          kind = "task",
-          text = clean(t_rest),
-          done = t_mark ~= " ",
-          state = t_mark,
-        }
-      end
-      return
-    end
-
-    local ctype = line:match "^%s*>%s*%[!(%w+)%]"
-    if ctype then
-      if on("callout") then
-        local title = line:match "^%s*>%s*%[!%w+%]%s*(.*)$"
-        title = (title and title ~= "") and clean(title) or ctype:upper()
-        add { lnum = i, level = child_level(), kind = "callout", text = title, label = ctype:lower() }
-      end
-      return
-    end
-
-    if line:match "^%s*|.*|%s*$" and (lines[i + 1] or ""):match "^%s*|?[%s:|%-]+%-[%s:|%-]*$" then
-      if on("table") then
-        add { lnum = i, level = child_level(), kind = "table", text = clean(line:match "^%s*|%s*([^|]-)%s*|" or "table") }
-      end
-      return
-    end
-
-    -- HTML <table> (spans lines): label from its caption/first <th> (shared).
-    -- Consumed rows are skipped so cell content isn't re-scanned as entries.
-    if on("table") and line:match "^%s*<[Tt][Aa][Bb][Ll][Ee][%s>]" then
-      local parts, close = { line }, nil
-      for j = i + 1, math.min(#lines, i + 200) do
-        parts[#parts + 1] = lines[j]
-        if lines[j]:match "</[Tt][Aa][Bb][Ll][Ee]>" then
-          close = j
-          break
-        end
-      end
-      skip_until = close or i
-      add { lnum = i, level = child_level(), kind = "table", text = clean(html.table_label(table.concat(parts, "\n"))) }
-      return
-    end
-
-    -- When the line is a bullet, its inline links/images nest one level under it.
-    local b_indent, b_rest = line:match "^(%s*)[%-%*%+]%s+(.*)$"
-    local bullet = b_rest ~= nil and not b_rest:match "^%[.%]" and on("bullet")
-    local bullet_level = bullet and child_level(math.floor(#b_indent / 2)) or nil
-    local inline_level = bullet_level and bullet_level + 1 or child_level()
-
-    if on("image") then
-      for alt in line:gmatch "!%[([^%]]*)%]%b()" do
-        add { lnum = i, level = inline_level, kind = "image", text = alt ~= "" and alt or "image" }
-      end
-      -- HTML <img> tags (shared with the html parser).
-      for _, alt in ipairs(html.images(line)) do
-        add { lnum = i, level = inline_level, kind = "image", text = clean(alt) }
-      end
-    end
-    if on("link") then
-      for txt in line:gmatch "[^!]%[([^%]]+)%]%b()" do
-        add { lnum = i, level = inline_level, kind = "link", text = clean(txt) }
-      end
-      local lead = line:match "^%[([^%]]+)%]%b()"
-      if lead then
-        add { lnum = i, level = inline_level, kind = "link", text = clean(lead) }
-      end
-      -- HTML <a href> links (shared with the html parser).
-      for _, text in ipairs(html.links(line)) do
-        add { lnum = i, level = inline_level, kind = "link", text = clean(text) }
-      end
-    end
-    if on("summary") then
-      for _, text in ipairs(html.summaries(line)) do
-        add { lnum = i, level = inline_level, kind = "summary", text = clean(text) }
-      end
-    end
-    if on("definition") then
-      for _, text in ipairs(html.terms(line)) do
-        add { lnum = i, level = inline_level, kind = "definition", text = clean(text) }
-      end
-    end
-    if bullet then
-      add { lnum = i, level = bullet_level, kind = "bullet", text = clean(b_rest) }
     end
   end
 
-  for i, line in ipairs(lines) do
-    scan(i, line)
+  local t_indent, t_mark, t_rest = line:match "^(%s*)[%-%*%+]%s+%[(.)%]%s+(.*)$"
+  if t_mark then
+    if self:enabled "task" then
+      self:add {
+        lnum = i,
+        level = self:child_level(math.floor(#t_indent / 2)),
+        kind = "task",
+        text = clean(t_rest),
+        done = t_mark ~= " ",
+        state = t_mark,
+      }
+    end
+    return
   end
-  return entries
+
+  local ctype = line:match "^%s*>%s*%[!(%w+)%]"
+  if ctype then
+    if self:enabled "callout" then
+      local title = line:match "^%s*>%s*%[!%w+%]%s*(.*)$"
+      title = (title and title ~= "") and clean(title) or ctype:upper()
+      self:add { lnum = i, level = self:child_level(), kind = "callout", text = title, label = ctype:lower() }
+    end
+    return
+  end
+
+  if line:match "^%s*|.*|%s*$" and (self.lines[i + 1] or ""):match "^%s*|?[%s:|%-]+%-[%s:|%-]*$" then
+    if self:enabled "table" then
+      self:add { lnum = i, level = self:child_level(), kind = "table", text = clean(line:match "^%s*|%s*([^|]-)%s*|" or "table") }
+    end
+    return
+  end
+
+  -- HTML <table> (spans lines): label from its caption/first <th> (shared).
+  -- Consumed rows are skipped so cell content isn't re-scanned as entries.
+  if self:enabled "table" and line:match "^%s*<[Tt][Aa][Bb][Ll][Ee][%s>]" then
+    local parts, close = { line }, nil
+    for j = i + 1, math.min(#self.lines, i + 200) do
+      parts[#parts + 1] = self.lines[j]
+      if self.lines[j]:match "</[Tt][Aa][Bb][Ll][Ee]>" then
+        close = j
+        break
+      end
+    end
+    self.skip_until = close or i
+    self:add { lnum = i, level = self:child_level(), kind = "table", text = clean(html.table_label(table.concat(parts, "\n"))) }
+    return
+  end
+
+  -- When the line is a bullet, its inline links/images nest one level under it.
+  local b_indent, b_rest = line:match "^(%s*)[%-%*%+]%s+(.*)$"
+  local bullet = b_rest ~= nil and not b_rest:match "^%[.%]" and self:enabled "bullet"
+  local bullet_level = bullet and self:child_level(math.floor(#b_indent / 2)) or nil
+  local inline_level = bullet_level and bullet_level + 1 or self:child_level()
+
+  if self:enabled "image" then
+    for alt in line:gmatch "!%[([^%]]*)%]%b()" do
+      self:add { lnum = i, level = inline_level, kind = "image", text = alt ~= "" and alt or "image" }
+    end
+    -- HTML <img> tags (shared with the html parser).
+    for _, alt in ipairs(html.images(line)) do
+      self:add { lnum = i, level = inline_level, kind = "image", text = clean(alt) }
+    end
+  end
+  if self:enabled "link" then
+    for txt in line:gmatch "[^!]%[([^%]]+)%]%b()" do
+      self:add { lnum = i, level = inline_level, kind = "link", text = clean(txt) }
+    end
+    local lead = line:match "^%[([^%]]+)%]%b()"
+    if lead then
+      self:add { lnum = i, level = inline_level, kind = "link", text = clean(lead) }
+    end
+    -- HTML <a href> links (shared with the html parser).
+    for _, text in ipairs(html.links(line)) do
+      self:add { lnum = i, level = inline_level, kind = "link", text = clean(text) }
+    end
+  end
+  if self:enabled "summary" then
+    for _, text in ipairs(html.summaries(line)) do
+      self:add { lnum = i, level = inline_level, kind = "summary", text = clean(text) }
+    end
+  end
+  if self:enabled "definition" then
+    for _, text in ipairs(html.terms(line)) do
+      self:add { lnum = i, level = inline_level, kind = "definition", text = clean(text) }
+    end
+  end
+  if bullet then
+    self:add { lnum = i, level = bullet_level or self:child_level(), kind = "bullet", text = clean(b_rest) }
+  end
 end
 
-return M
+---Scan a Markdown buffer line-by-line, emitting typed entries (unsorted).
+---@return TocEntry[]
+function Markdown:parse()
+  self.lines = self:lines()
+  for i, line in ipairs(self.lines) do
+    self:scan(i, line)
+  end
+  return self.entries
+end
+
+return Markdown

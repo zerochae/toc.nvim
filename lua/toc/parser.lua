@@ -14,7 +14,7 @@ local by_filetype = {
 ---@return TocEntry[]
 function M.parse(bufnr)
   local ft = vim.bo[bufnr].filetype
-  local entries = require(by_filetype[ft] or DEFAULT).parse(bufnr)
+  local entries = require(by_filetype[ft] or DEFAULT).new(bufnr):parse()
 
   table.sort(entries, function(a, b)
     if a.lnum ~= b.lnum then
