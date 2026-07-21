@@ -115,7 +115,43 @@ function Html:regex()
       end
       skip_until = close or #lines
       self:add { lnum = i, level = self:child_level(), kind = "table", text = h.table_label(table.concat(parts, "\n")) }
+    elseif self:enabled "code" and line:match "^%s*<[Pp][Rr][Ee][%s>]" then
+      -- <pre> block → a single "code" entry (matches the treesitter path).
+      local close
+      for j = i, #lines do
+        if lines[j]:match "</[Pp][Rr][Ee]>" then
+          close = j
+          break
+        end
+      end
+      skip_until = close or #lines
+      self:add { lnum = i, level = self:child_level(), kind = "code", text = "code" }
+    elseif self:enabled "callout" and line:match "^%s*<[Bb][Ll][Oo][Cc][Kk][Qq][Uu][Oo][Tt][Ee][%s>]" then
+      -- <blockquote> block → a callout labelled from its flattened text.
+      -- Start at line i so a single-line <blockquote>…</blockquote> closes here.
+      local parts, close = {}, nil
+      for j = i, #lines do
+        parts[#parts + 1] = lines[j]
+        if lines[j]:match "</[Bb][Ll][Oo][Cc][Kk][Qq][Uu][Oo][Tt][Ee]>" then
+          close = j
+          break
+        end
+      end
+      skip_until = close or #lines
+      local text = h.flatten(table.concat(parts, " "))
+      self:add {
+        lnum = i,
+        level = self:child_level(),
+        kind = "callout",
+        text = text ~= "" and text or "quote",
+        label = "quote",
+      }
     else
+      if self:enabled "bullet" then
+        for _, text in ipairs(h.list_items(line)) do
+          self:add { lnum = i, level = self:child_level(), kind = "bullet", text = text }
+        end
+      end
       if self:enabled "link" then
         for _, text in ipairs(h.links(line)) do
           self:add { lnum = i, level = self:child_level(), kind = "link", text = text }
