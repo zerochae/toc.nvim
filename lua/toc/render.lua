@@ -6,6 +6,21 @@ local layout = require "toc.layout"
 -- sizes an "auto" panel, and draws the active-entry marker.
 local M = {}
 
+-- Highlight groups created on demand for fg-coloured marks (code language icons).
+local fg_hl_cache = {}
+
+---Ensure a highlight group exists for a raw fg colour and return its name.
+---@param fg string
+---@return string
+local function ensure_fg_hl(fg)
+  local hl = "TocLang_" .. fg:gsub("[^%x]", "")
+  if not fg_hl_cache[hl] then
+    pcall(vim.api.nvim_set_hl, 0, hl, { fg = fg, default = true })
+    fg_hl_cache[hl] = true
+  end
+  return hl
+end
+
 ---Draw the active-entry marker (sign + line highlight) on entry `i`.
 ---@param i integer|nil
 function M.set_active(i)
@@ -49,7 +64,7 @@ function M.draw()
   for _, mark in ipairs(marks) do
     pcall(vim.api.nvim_buf_set_extmark, state.toc_buf, state.ns, mark.line, mark.col, {
       end_col = mark.end_col,
-      hl_group = mark.hl,
+      hl_group = mark.fg and ensure_fg_hl(mark.fg) or mark.hl,
     })
   end
 

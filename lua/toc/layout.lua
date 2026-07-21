@@ -8,32 +8,26 @@ local M = {}
 ---@field line integer 0-based buffer line
 ---@field col integer byte start column
 ---@field end_col integer byte end column
----@field hl string highlight group
+---@field hl? string highlight group
+---@field fg? string when set, the renderer creates a fg-coloured group for it
 
-local lang_hl_cache = {}
+local devicons_mod -- nil = unchecked, false = unavailable (cached across calls)
 
----Icon + coloured highlight group for a fenced-code language via
----nvim-web-devicons, if available. Returns "" (and nil) when it is not.
+---Icon + devicons colour for a fenced-code language, if available. Returns ""
+---(and nil) when devicons is absent or the language is unknown. Pure lookup:
+---the renderer, not this module, turns the colour into a highlight group.
 ---@param lang string
----@return string icon, string|nil hl
+---@return string icon, string|nil color
 local function lang_deco(lang)
-  local ok, devicons = pcall(require, "nvim-web-devicons")
-  if not ok then
+  if devicons_mod == nil then
+    local ok, m = pcall(require, "nvim-web-devicons")
+    devicons_mod = (ok and m) or false
+  end
+  if not devicons_mod then
     return "", nil
   end
-  local icon, color = devicons.get_icon_color_by_filetype(lang, { default = false })
-  if not icon then
-    return "", nil
-  end
-  local hl
-  if color then
-    hl = "TocLang_" .. lang
-    if not lang_hl_cache[hl] then
-      pcall(vim.api.nvim_set_hl, 0, hl, { fg = color, default = true })
-      lang_hl_cache[hl] = true
-    end
-  end
-  return icon, hl
+  local icon, color = devicons_mod.get_icon_color_by_filetype(lang, { default = false })
+  return icon or "", color
 end
 
 ---Shallowest heading level present (defaults to 1 when empty).
@@ -109,6 +103,14 @@ local KIND_HL = {
   definition = "TocDefinition",
 }
 
+---Normalise a task's checkbox state into (raw char, is-done, is-todo).
+---@param e TocEntry
+---@return string state, boolean done, boolean todo
+local function task_state(e)
+  local st = e.state or (e.done and "x" or " ")
+  return st, st == "x" or st == "X", st == " "
+end
+
 ---@param e TocEntry
 ---@return string
 local function entry_glyph(e)
@@ -118,10 +120,10 @@ local function entry_glyph(e)
     return g.heading[e.level] or g.heading[#g.heading] or g.fallback
   elseif e.kind == "task" then
     local t = el.task
-    local st = e.state or (e.done and "x" or " ")
-    if st == " " then
+    local st, done, todo = task_state(e)
+    if todo then
       return t.todo
-    elseif st == "x" or st == "X" then
+    elseif done then
       return t.done
     end
     return (t.states and t.states[st]) or t.done
@@ -140,10 +142,10 @@ local function entry_hl(e)
     return heading_hl(e.level)
   elseif e.kind == "task" then
     local t = config.options.elements.task
-    local st = e.state or (e.done and "x" or " ")
-    if st == " " then
+    local st, done, todo = task_state(e)
+    if todo then
       return "TocTask"
-    elseif st == "x" or st == "X" then
+    elseif done then
       return "TocTaskDone"
     end
     return (t.state_hls and t.state_hls[st]) or "TocTaskDone"
@@ -191,6 +193,41 @@ local function fit_text(text, avail)
   return vim.fn.strcharpart(text, 0, take) .. ell
 end
 
+---A stateful numberer for headings under `mode`; nil for the "none" mode.
+---@param mode string|nil
+---@param base integer shallowest level present
+---@return (fun(h: TocEntry): string)|nil
+local function heading_numberer(mode, base)
+  if not mode or mode == "none" then
+    return nil
+  elseif mode == "flat" then
+    local n = 0
+    return function()
+      n = n + 1
+      return tostring(n)
+    end
+  elseif mode == "level" then
+    local per_level = {}
+    return function(h)
+      per_level[h.level] = (per_level[h.level] or 0) + 1
+      return h.level .. "." .. per_level[h.level]
+    end
+  end
+  -- "nested" (default): a dotted path from `base` down to the entry's level.
+  local counters = {}
+  return function(h)
+    counters[h.level] = (counters[h.level] or 0) + 1
+    for l = h.level + 1, 6 do
+      counters[l] = nil
+    end
+    local parts = {}
+    for l = base, h.level do
+      parts[#parts + 1] = counters[l] or 1
+    end
+    return table.concat(parts, ".")
+  end
+end
+
 ---Compute the number/label string per entry, plus optional icon decorations.
 ---@param entries TocEntry[]
 ---@param base integer shallowest level present
@@ -221,11 +258,11 @@ local function compute_numbers(entries, base)
     kind_count[key] = (kind_count[key] or 0) + 1
     local label = labelled(show_labels and key or "", kind_count[key])
     if e.kind == "code" and e.text ~= "" and e.text ~= "code" then
-      local icon, hl = "", nil
+      local icon, color = "", nil
       if not spec or spec.lang_glyph ~= false then
-        icon, hl = lang_deco(e.text)
+        icon, color = lang_deco(e.text)
       end
-      local deco = icon ~= "" and hl and { hl = hl, col = #label + 2, len = #icon } or nil
+      local deco = (icon ~= "" and color) and { fg = color, col = #label + 2, len = #icon } or nil
       label = label .. " [" .. (icon ~= "" and icon .. " " or "") .. e.text .. "]"
       return label, deco
     end
@@ -233,52 +270,11 @@ local function compute_numbers(entries, base)
   end
   local head_prefix = show_labels and ((els.heading and els.heading.label) or "") or ""
 
-  if not mode or mode == "none" then
-    for i, h in ipairs(entries) do
-      if h.kind == "heading" then
-        out[i] = ""
-      else
-        out[i], decos[i] = element_label(h)
-      end
-    end
-    return out, decos
-  end
-  if mode == "flat" then
-    local n = 0
-    for i, h in ipairs(entries) do
-      if h.kind == "heading" then
-        n = n + 1
-        out[i] = labelled(head_prefix, n)
-      else
-        out[i], decos[i] = element_label(h)
-      end
-    end
-    return out, decos
-  end
-  if mode == "level" then
-    local per_level = {}
-    for i, h in ipairs(entries) do
-      if h.kind == "heading" then
-        per_level[h.level] = (per_level[h.level] or 0) + 1
-        out[i] = labelled(head_prefix, h.level .. "." .. per_level[h.level])
-      else
-        out[i], decos[i] = element_label(h)
-      end
-    end
-    return out, decos
-  end
-  local counters = {}
+  -- A per-mode heading numberer; nil means headings carry no number ("none").
+  local number_of = heading_numberer(mode, base)
   for i, h in ipairs(entries) do
     if h.kind == "heading" then
-      counters[h.level] = (counters[h.level] or 0) + 1
-      for l = h.level + 1, 6 do
-        counters[l] = nil
-      end
-      local parts = {}
-      for l = base, h.level do
-        parts[#parts + 1] = counters[l] or 1
-      end
-      out[i] = labelled(head_prefix, table.concat(parts, "."))
+      out[i] = number_of and labelled(head_prefix, number_of(h)) or ""
     else
       out[i], decos[i] = element_label(h)
     end
@@ -353,7 +349,7 @@ function M.build(entries)
         local seg_start, seg_end = m.col, m.end_col
         local ic_start = seg_start + d.col
         m.end_col = ic_start
-        marks[#marks + 1] = { line = lnum, col = ic_start, end_col = ic_start + d.len, hl = d.hl }
+        marks[#marks + 1] = { line = lnum, col = ic_start, end_col = ic_start + d.len, fg = d.fg }
         marks[#marks + 1] = { line = lnum, col = ic_start + d.len, end_col = seg_end, hl = "TocNumber" }
       end
     end
