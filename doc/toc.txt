@@ -243,9 +243,9 @@ config with `elements.code.lang_glyph = false`.
 
 nvim-treesitter ~
 HTML files parse via treesitter when the `html` parser is installed
-(`:TSInstall html`). Without it, a regex fallback still finds headings,
-links, images and disclosures, but skips tables. Markdown and help never
-need treesitter.
+(`:TSInstall html`). Without it, a regex fallback handles headings, links,
+images, tables, code, callouts, list items and disclosures; treesitter is
+just more robust on irregular markup. Markdown and help never need it.
 
 ==============================================================================
 7. HIGHLIGHTS                                                *toc-highlights*

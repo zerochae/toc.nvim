@@ -498,6 +498,29 @@ describe("parser: HTML regex fallback", function()
   it("does not leak links from consumed table cells", function()
     assert.equals(0, kind_counts(entries).link or 0)
   end)
+
+  it("parses pre/blockquote/li via the fallback", function()
+    local H = fixture("fallback2.html", {
+      "<h1>Doc</h1>",
+      "<pre>print(1)</pre>",
+      "<blockquote>Important note</blockquote>",
+      "<ul><li>First item</li></ul>",
+    })
+    toc.setup {
+      auto_enabled = false,
+      elements = { code = { enable = true }, callout = { enable = true }, bullet = { enable = true } },
+    }
+    vim.cmd("edit " .. vim.fn.fnameescape(H))
+    vim.bo.filetype = "html"
+    local Html = require "toc.parsers.html"
+    local p = Html.new(0)
+    p:regex()
+    local counts = kind_counts(p.entries)
+    assert.equals(1, counts.code or 0)
+    assert.equals(1, counts.callout or 0)
+    assert.equals(1, counts.bullet or 0)
+    assert.equals("Important note", first_by_kind(p.entries).callout.text)
+  end)
 end)
 
 -- ── parser: typed elements ──────────────────────────────────────────────────

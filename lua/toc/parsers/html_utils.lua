@@ -18,6 +18,7 @@ local P_SUMMARY = "<" .. ci "summary" .. "[^>]*>(.-)</" .. ci "summary" .. ">"
 local P_DT = "<" .. ci "dt" .. "[^>]*>(.-)</" .. ci "dt" .. ">"
 local P_CAPTION = "<" .. ci "caption" .. "[^>]*>(.-)</" .. ci "caption" .. ">"
 local P_TH = "<" .. ci "th" .. "[^>]*>(.-)</" .. ci "th" .. ">"
+local P_LI = "<" .. ci "li" .. "[^>]*>(.-)</" .. ci "li" .. ">"
 
 ---@param tagtext string a single tag's source ("<img alt='x' ...>")
 ---@param name string attribute name
@@ -124,6 +125,18 @@ function M.table_label(html_text)
     return th
   end
   return "table"
+end
+
+---Text of each `<li>...</li>` (list item) on the line.
+---@param line string
+---@return string[]
+function M.list_items(line)
+  local out = {}
+  for inner in line:gmatch(P_LI) do
+    local text = M.flatten(inner)
+    out[#out + 1] = text ~= "" and text or "item"
+  end
+  return out
 end
 
 return M
