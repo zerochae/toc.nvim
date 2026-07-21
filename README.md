@@ -21,7 +21,8 @@ the TOC moves it in the document (and back), with a beacon flash on jump.
 - Fixed or `auto` width, auto-open/close, debounced + on-save refresh
 - Optional [markview.nvim](https://github.com/OXY2DEV/markview.nvim) glyphs/colours
 - Optional [devicons](https://github.com/nvim-tree/nvim-web-devicons) language icons
-- Markdown and Vim help (`doc/*.txt`) out of the box; add formats under `lua/toc/parsers/`
+- Optional [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) for full HTML file parsing
+- Markdown, Vim help (`doc/*.txt`), and HTML out of the box; add formats under `lua/toc/parsers/`
 
 ## Install
 
@@ -30,10 +31,11 @@ the TOC moves it in the document (and back), with a beacon flash on jump.
 ```lua
 {
   "zerochae/toc.nvim",
-  ft = { "markdown", "quarto", "rmd", "mdx", "help" },
-  dependencies = { -- both optional
+  ft = { "markdown", "quarto", "rmd", "mdx", "help", "html" },
+  dependencies = { -- all optional
     "nvim-tree/nvim-web-devicons",
     "OXY2DEV/markview.nvim",
+    "nvim-treesitter/nvim-treesitter", -- full HTML parsing (tables, disclosures)
   },
   keys = { { "<leader>t", "<cmd>Toc toggle<cr>", desc = "Toggle TOC" } },
   opts = {},
@@ -42,6 +44,10 @@ the TOC moves it in the document (and back), with a beacon flash on jump.
 
 A [Nerd Font](https://www.nerdfonts.com) is needed for the glyphs (except the
 `plain` preset).
+
+Markdown and Vim help parse with no dependencies. HTML files use treesitter
+when its parser is installed (`:TSInstall html`) and fall back to a limited
+regex scanner otherwise, so tables and disclosures may be skipped without it.
 
 ## Usage
 
