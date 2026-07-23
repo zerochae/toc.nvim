@@ -315,6 +315,67 @@ describe("parser: Org", function()
   end)
 end)
 
+-- ── parser dispatches on filetype: reStructuredText ─────────────────────────
+describe("parser: reStructuredText", function()
+  local entries
+  before_each(function()
+    local R = fixture("d.rst", {
+      "Title",
+      "=====",
+      "",
+      "Section A",
+      "---------",
+      "",
+      "Sub A",
+      "~~~~~",
+      "",
+      "Section B",
+      "---------",
+      "",
+      ".. code-block:: lua",
+      "",
+      "   print(1)",
+      "",
+      "`the repo <https://x>`_",
+    })
+    toc.setup {
+      auto_enabled = false,
+      elements = { heading = { enable = true }, code = { enable = true }, link = { enable = true } },
+    }
+    vim.cmd("edit " .. vim.fn.fnameescape(R))
+    vim.bo.filetype = "rst"
+    entries = parser.parse(0)
+  end)
+
+  it("counts underlined sections", function()
+    assert.equals(4, kind_counts(entries).heading)
+  end)
+  it("assigns levels by first-appearance order of the adornment", function()
+    local lvl = {}
+    for _, e in ipairs(entries) do
+      if e.kind == "heading" then
+        lvl[e.text] = e.level
+      end
+    end
+    assert.equals(1, lvl["Title"]) -- = seen first
+    assert.equals(2, lvl["Section A"]) -- - second
+    assert.equals(3, lvl["Sub A"]) -- ~ third
+    assert.equals(2, lvl["Section B"]) -- - reused
+  end)
+  it("indexes a code-block directive with its language", function()
+    assert.equals(1, kind_counts(entries).code)
+    assert.equals("lua", first_by_kind(entries).code.text)
+  end)
+  it("parses an inline link's text", function()
+    assert.equals("the repo", first_by_kind(entries).link.text)
+  end)
+  it("does not treat the underline row as a heading", function()
+    for _, e in ipairs(entries) do
+      assert.is_nil(e.text:find "^=+$")
+    end
+  end)
+end)
+
 -- ── parser: raw HTML headings ───────────────────────────────────────────────
 describe("parser: raw HTML headings", function()
   local entries
