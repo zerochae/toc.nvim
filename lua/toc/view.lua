@@ -214,15 +214,25 @@ function View:on_src_move()
     return
   end
   local cur = vim.api.nvim_win_get_cursor(self.src_win)[1]
-  local active
-  for i, h in ipairs(self.headings) do
-    if h.lnum <= cur then
-      if self.heading_to_line[i] then
-        active = i
-      end
+  -- headings are sorted by lnum; binary-search the last entry at or above the
+  -- cursor, then step back to the nearest displayed one.
+  local lo, hi, idx = 1, #self.headings, nil
+  while lo <= hi do
+    local mid = math.floor((lo + hi) / 2)
+    if self.headings[mid].lnum <= cur then
+      idx = mid
+      lo = mid + 1
     else
+      hi = mid - 1
+    end
+  end
+  local active
+  while idx do
+    if self.heading_to_line[idx] then
+      active = idx
       break
     end
+    idx = idx - 1
   end
   if active then
     self:focus_line(active)
