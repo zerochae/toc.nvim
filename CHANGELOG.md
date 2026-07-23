@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/zerochae/toc.nvim/compare/v1.2.0...v1.3.0) (2026-07-23)
+
+
+### Features
+
+* add reStructuredText parser (sections, code-block, links) ([#22](https://github.com/zerochae/toc.nvim/issues/22)) ([f4b6751](https://github.com/zerochae/toc.nvim/commit/f4b67515d9b2d8cee926ec2dd36b7bae05cc2534))
+
 ## [1.2.0](https://github.com/zerochae/toc.nvim/compare/v1.1.0...v1.2.0) (2026-07-23)
 
 
