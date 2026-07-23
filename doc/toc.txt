@@ -40,8 +40,11 @@ blocks, `Note:` / `WARNING:` lines (callouts) and `*tags*` (anchors) are
 indexed too, each honouring its `elements.<kind>` toggle. Org files (filetype
 "org") index headings by star depth (`*`/`**`/...), `#+BEGIN_SRC` blocks as
 code, and `[[link][desc]]` links; TODO keywords and trailing `:tags:` are
-stripped from titles. `help`, `html` and `org` are default `filetypes`, so the
-TOC auto-opens while editing them just like markdown. Additional formats can be
+stripped from titles. reStructuredText (filetype "rst") indexes underlined (or
+over/underlined) sections -- the level follows the order each adornment char
+first appears -- plus `.. code-block::` directives and `` `text <url>`_ ``
+links. `help`, `html`, `org` and `rst` are default `filetypes`, so the TOC
+auto-opens while editing them just like markdown. Additional formats can be
 added under lua/toc/parsers/.
 
 Setup: >lua
