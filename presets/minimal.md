@@ -2,8 +2,9 @@
 
 Bare glyph tree — no numbers, labels, title or text.
 
-Rendered for [demo2.md](./demo2.md). Variations show how `labels` / `numbers`
-change the output on top of this preset (identical variations are omitted).
+Rendered for the *Widget Service* section of [demo.md](../tests/fixtures/demo.md).
+Variations show how `labels` / `numbers` change the output on top of this
+preset (identical variations are omitted).
 
 ## Base
 

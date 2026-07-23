@@ -71,5 +71,5 @@ require("toc").setup {
 }
 ```
 
-See the [preset gallery](./examples/) for rendered output, and `:help toc.nvim`
+See the [preset gallery](./presets/) for rendered output, and `:help toc.nvim`
 for the full option list, highlight groups, and defaults.
