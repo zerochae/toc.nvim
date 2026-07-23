@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/zerochae/toc.nvim/compare/v1.1.0...v1.2.0) (2026-07-23)
+
+
+### Features
+
+* add Org parser (headings, src blocks, links) ([#20](https://github.com/zerochae/toc.nvim/issues/20)) ([22991fc](https://github.com/zerochae/toc.nvim/commit/22991fc11e9c51983bb6af810fd2666b9ea01ea2))
+* report tree-sitter html parser in health check ([#17](https://github.com/zerochae/toc.nvim/issues/17)) ([7ef8e0d](https://github.com/zerochae/toc.nvim/commit/7ef8e0da0f74fc67dc45fec03a29e347e2539297))
+
+
+### Performance Improvements
+
+* binary-search cursor/truncate lookups and cache the html query ([#18](https://github.com/zerochae/toc.nvim/issues/18)) ([4bdbfbe](https://github.com/zerochae/toc.nvim/commit/4bdbfbe7918d86abd4ac1bfb96acd6a6dfcc3a63))
+
 ## [1.1.0](https://github.com/zerochae/toc.nvim/compare/v1.0.1...v1.1.0) (2026-07-21)
 
 
