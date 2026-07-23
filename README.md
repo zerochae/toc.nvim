@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="./assets/logo.svg" width="120" alt="toc.nvim" />
+</div>
+
 # toc.nvim
 
 A fancy table of contents for Markdown in a side split. Moving the cursor in
