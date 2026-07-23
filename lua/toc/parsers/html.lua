@@ -13,6 +13,9 @@ function Html.new(bufnr)
   return setmetatable(Parser.new(bufnr), Html) --[[@as Html]]
 end
 
+-- Compiled (tag_name) treesitter query, built once and reused across parses.
+local tag_query
+
 -- tag_name -> element kind for tags whose title is just their flattened text.
 -- <a>/<img> (need attrs) and <table> (needs a caption) have dedicated branches.
 local TS_KIND = {
@@ -36,12 +39,15 @@ function Html:treesitter()
   if not ok_tree or not tree then
     return false
   end
-  local ok_q, query = pcall(vim.treesitter.query.parse, "html", "(tag_name) @tag")
-  if not ok_q then
-    return false
+  if not tag_query then
+    local ok_q, q = pcall(vim.treesitter.query.parse, "html", "(tag_name) @tag")
+    if not ok_q then
+      return false
+    end
+    tag_query = q
   end
 
-  for _, node in query:iter_captures(tree:root(), self.bufnr, 0, -1) do
+  for _, node in tag_query:iter_captures(tree:root(), self.bufnr, 0, -1) do
     local container = node:parent() -- start_tag / self_closing_tag / end_tag
     if container and container:type() ~= "end_tag" then
       local tag = vim.treesitter.get_node_text(node, self.bufnr):lower()

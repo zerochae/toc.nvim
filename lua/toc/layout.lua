@@ -182,15 +182,18 @@ local function fit_text(text, avail)
   if budget <= 0 then
     return ell
   end
-  local take = 0
-  for i = 1, vim.fn.strchars(text) do
-    if vim.fn.strdisplaywidth(vim.fn.strcharpart(text, 0, i)) <= budget then
-      take = i
+  -- Display width grows monotonically with the character count, so binary-search
+  -- the largest prefix that still fits the budget.
+  local lo, hi = 0, vim.fn.strchars(text)
+  while lo < hi do
+    local mid = math.floor((lo + hi + 1) / 2)
+    if vim.fn.strdisplaywidth(vim.fn.strcharpart(text, 0, mid)) <= budget then
+      lo = mid
     else
-      break
+      hi = mid - 1
     end
   end
-  return vim.fn.strcharpart(text, 0, take) .. ell
+  return vim.fn.strcharpart(text, 0, lo) .. ell
 end
 
 ---A stateful numberer for headings under `mode`; nil for the "none" mode.
