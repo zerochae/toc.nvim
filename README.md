@@ -1,4 +1,6 @@
-# toc.nvim
+<div align="center">
+  <img src="./assets/logo-lockup.svg" width="240" alt="toc.nvim" />
+</div>
 
 A fancy table of contents for Markdown in a side split. Moving the cursor in
 the TOC moves it in the document (and back), with a beacon flash on jump.
