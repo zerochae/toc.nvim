@@ -249,6 +249,72 @@ describe("parser: help elements", function()
   end)
 end)
 
+-- ── parser dispatches on filetype: Org ──────────────────────────────────────
+describe("parser: Org", function()
+  local entries
+  before_each(function()
+    local O = fixture("d.org", {
+      "* Introduction",
+      "** Motivation",
+      "*** TODO Write the guide",
+      "*** DONE Basic setup",
+      "** Config",
+      "#+BEGIN_SRC lua",
+      "* not a heading inside src",
+      "#+END_SRC",
+      "See [[https://x][the repo]] here.",
+      "* Reference :docs:internal:",
+    })
+    toc.setup {
+      auto_enabled = false,
+      elements = { heading = { enable = true }, code = { enable = true }, link = { enable = true } },
+    }
+    vim.cmd("edit " .. vim.fn.fnameescape(O))
+    vim.bo.filetype = "org"
+    entries = parser.parse(0)
+  end)
+
+  local function titles(es)
+    local t = {}
+    for _, e in ipairs(es) do
+      t[e.text] = true
+    end
+    return t
+  end
+
+  it("counts headings by star depth", function()
+    assert.equals(6, kind_counts(entries).heading)
+  end)
+  it("levels the first heading as 1 and a `***` heading as 3", function()
+    assert.equals(1, entries[1].level)
+    local three
+    for _, e in ipairs(entries) do
+      if e.text == "Write the guide" then
+        three = e.level
+      end
+    end
+    assert.equals(3, three)
+  end)
+  it("strips TODO/DONE keywords from titles", function()
+    local t = titles(entries)
+    assert.is_true(t["Write the guide"])
+    assert.is_true(t["Basic setup"])
+  end)
+  it("strips trailing tags", function()
+    assert.is_true(titles(entries)["Reference"])
+  end)
+  it("indexes a source block with its language", function()
+    assert.equals(1, kind_counts(entries).code)
+    assert.equals("lua", first_by_kind(entries).code.text)
+  end)
+  it("does not index headings inside a src block", function()
+    assert.is_nil(titles(entries)["not a heading inside src"])
+  end)
+  it("parses a link with its description", function()
+    assert.equals("the repo", first_by_kind(entries).link.text)
+  end)
+end)
+
 -- ── parser: raw HTML headings ───────────────────────────────────────────────
 describe("parser: raw HTML headings", function()
   local entries

@@ -1,0 +1,27 @@
+#+TITLE: toc.nvim org demo
+
+* Introduction
+Org files are indexed by heading depth: one star per level.
+
+** Motivation
+Why an outline helps while editing long notes.
+
+** Goals
+- keep the outline in sync with the cursor
+- jump anywhere with a keypress
+
+* Usage
+*** TODO Write the getting-started guide
+*** DONE Wire up the default keymap
+
+** Configuration
+#+BEGIN_SRC lua
+require("toc").setup {
+  preset = "compact",
+}
+#+END_SRC
+
+See [[https://github.com/zerochae/toc.nvim][the repository]] for the full option list.
+
+* Reference :docs:internal:
+Trailing tags and TODO keywords are stripped from the panel.
