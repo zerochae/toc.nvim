@@ -10,6 +10,7 @@ local by_filetype = {
   help = "toc.parsers.help",
   html = "toc.parsers.html",
   org = "toc.parsers.org",
+  rst = "toc.parsers.rst",
 }
 
 ---Parse `bufnr` into sorted TOC entries, dispatching on its filetype.

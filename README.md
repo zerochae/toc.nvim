@@ -24,7 +24,7 @@ the TOC moves it in the document (and back), with a beacon flash on jump.
 - Optional [markview.nvim](https://github.com/OXY2DEV/markview.nvim) glyphs/colours
 - Optional [devicons](https://github.com/nvim-tree/nvim-web-devicons) language icons
 - Optional [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) for full HTML file parsing
-- Markdown, Vim help (`doc/*.txt`), HTML, and Org out of the box; add formats under `lua/toc/parsers/`
+- Markdown, Vim help (`doc/*.txt`), HTML, Org, and reStructuredText out of the box; add formats under `lua/toc/parsers/`
 
 ## Install
 
@@ -33,7 +33,7 @@ the TOC moves it in the document (and back), with a beacon flash on jump.
 ```lua
 {
   "zerochae/toc.nvim",
-  ft = { "markdown", "quarto", "rmd", "mdx", "help", "html", "org" },
+  ft = { "markdown", "quarto", "rmd", "mdx", "help", "html", "org", "rst" },
   dependencies = { -- all optional
     "nvim-tree/nvim-web-devicons",
     "OXY2DEV/markview.nvim",
