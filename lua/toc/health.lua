@@ -45,9 +45,14 @@ function M.check()
     h.info "markview.nvim not found (optional; borrows heading/checkbox glyphs)"
   end
 
+  if pcall(vim.treesitter.get_string_parser, "", "html") then
+    h.ok "tree-sitter html parser found (full HTML file parsing)"
+  else
+    h.info "tree-sitter html parser not found (HTML files use a limited regex fallback; `:TSInstall html` for full parsing)"
+  end
+
   h.info "glyphs require a Nerd Font (v3+). If you see boxes, install one and set 'guifont'."
   h.info "markdown/help parsing is regex-based (no treesitter needed)."
-  h.info "HTML parsing uses treesitter when available, with a limited regex fallback."
 end
 
 return M
