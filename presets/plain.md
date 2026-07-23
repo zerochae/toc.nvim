@@ -2,8 +2,9 @@
 
 ASCII / box-drawing tree; no Nerd Font or devicons required.
 
-Rendered for [demo2.md](./demo2.md). Variations show how `labels` / `numbers`
-change the output on top of this preset (identical variations are omitted).
+Rendered for the *Widget Service* section of [demo.md](../tests/fixtures/demo.md).
+Variations show how `labels` / `numbers` change the output on top of this
+preset (identical variations are omitted).
 
 ## Base
 

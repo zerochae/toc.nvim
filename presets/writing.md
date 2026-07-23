@@ -2,8 +2,9 @@
 
 Prose outline: headings only, text-first, hierarchical numbers, no tree lines.
 
-Rendered for [demo2.md](./demo2.md). Variations show how `labels` / `numbers`
-change the output on top of this preset (identical variations are omitted).
+Rendered for the *Widget Service* section of [demo.md](../tests/fixtures/demo.md).
+Variations show how `labels` / `numbers` change the output on top of this
+preset (identical variations are omitted).
 
 ## Base
 

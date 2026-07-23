@@ -2,8 +2,9 @@
 
 Roomy box-drawing tree; keeps Nerd Font glyphs and markview colours.
 
-Rendered for [demo2.md](./demo2.md). Variations show how `labels` / `numbers`
-change the output on top of this preset (identical variations are omitted).
+Rendered for the *Widget Service* section of [demo.md](../tests/fixtures/demo.md).
+Variations show how `labels` / `numbers` change the output on top of this
+preset (identical variations are omitted).
 
 ## Base
 
