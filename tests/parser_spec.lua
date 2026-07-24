@@ -97,6 +97,36 @@ describe("parser: front matter", function()
   end)
 end)
 
+-- ── parser: ATX heading indentation ─────────────────────────────────────────
+describe("parser: indented headings", function()
+  it("detects headings with up to 3 leading spaces (CommonMark)", function()
+    local F = fixture("indent-headings.md", {
+      "# H1",
+      " # H2 one space",
+      "   ### H3 three spaces",
+    })
+    toc.setup { auto_enabled = false, elements = vim.deepcopy(HEADINGS_ONLY) }
+    vim.cmd("edit " .. vim.fn.fnameescape(F))
+    local entries = parser.parse(0)
+    assert.equals(3, #entries)
+    assert.equals("H2 one space", entries[2].text)
+    assert.equals("H3 three spaces", entries[3].text)
+    assert.equals(3, entries[3].level)
+  end)
+
+  it("ignores a heading indented 4+ spaces (indented code block)", function()
+    local F = fixture("indent-code.md", {
+      "# Real",
+      "    # Not A Heading",
+    })
+    toc.setup { auto_enabled = false, elements = vim.deepcopy(HEADINGS_ONLY) }
+    vim.cmd("edit " .. vim.fn.fnameescape(F))
+    local entries = parser.parse(0)
+    assert.equals(1, #entries)
+    assert.equals("Real", entries[1].text)
+  end)
+end)
+
 -- ── parser: max_level ───────────────────────────────────────────────────────
 describe("parser: max_level", function()
   it("hides entries deeper than max_level", function()
