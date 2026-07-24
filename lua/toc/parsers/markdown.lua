@@ -60,8 +60,10 @@ function Markdown:scan(i, line)
     return
   end
 
-  local hashes, rest = line:match "^(#+)%s+(.*)$"
-  if hashes and #hashes <= 6 then
+  -- Up to 3 leading spaces are allowed before an ATX heading (CommonMark);
+  -- 4+ spaces make it an indented code block, so cap the indent.
+  local indent, hashes, rest = line:match "^( *)(#+)%s+(.*)$"
+  if hashes and #hashes <= 6 and #indent <= 3 then
     self.head_level = #hashes
     if self:enabled "heading" then
       self:add { lnum = i, level = self.head_level, kind = "heading", text = clean(rest) }
