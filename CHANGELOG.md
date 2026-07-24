@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/zerochae/toc.nvim/compare/v1.3.0...v1.3.1) (2026-07-24)
+
+
+### Bug Fixes
+
+* detect ATX headings indented up to 3 spaces ([#26](https://github.com/zerochae/toc.nvim/issues/26)) ([4f5bc08](https://github.com/zerochae/toc.nvim/commit/4f5bc08d7e5df932579261cf3ab52415a5af0ca4))
+
 ## [1.3.0](https://github.com/zerochae/toc.nvim/compare/v1.2.0...v1.3.0) (2026-07-23)
 
 
