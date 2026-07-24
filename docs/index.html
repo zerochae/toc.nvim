@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>toc.nvim — a fancy table of contents for Neovim</title>
+<meta name="description" content="A fancy table of contents for Markdown and more in a Neovim side split, with two-way cursor follow." />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" type="image/svg+xml" href="./logo.svg" />
+<link rel="stylesheet" href="./styles.css" />
+<meta property="og:title" content="toc.nvim" />
+<meta property="og:description" content="A fancy table of contents for Neovim, with two-way cursor follow." />
+</head>
+<body>
+<svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+<defs>
+  <symbol id="ic-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10z"/></symbol>
+  <symbol id="ic-prompt" viewBox="0 0 24 24"><path d="m6 17 5-5-5-5"/><path d="M13 19h5"/></symbol>
+  <symbol id="ic-github" viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12 12 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
+  <symbol id="ic-follow" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></symbol>
+  <symbol id="ic-tag" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 3 12V5a2 2 0 0 1 2-2h7a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.6z"/><circle cx="7.5" cy="7.5" r="1.4"/></symbol>
+  <symbol id="ic-layout" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></symbol>
+  <symbol id="ic-list" viewBox="0 0 24 24"><path d="M10 6h11"/><path d="M10 12h11"/><path d="M10 18h11"/><path d="M4 5h1v4"/><path d="M4 9h2"/><path d="M4 14h2v1.5L4.5 17H6"/></symbol>
+  <symbol id="ic-width" viewBox="0 0 24 24"><path d="m8 9-3 3 3 3"/><path d="m16 9 3 3-3 3"/><path d="M5 12h14"/></symbol>
+  <symbol id="ic-plug" viewBox="0 0 24 24"><path d="M9 2v6"/><path d="M15 2v6"/><path d="M6 8h12v2a6 6 0 0 1-12 0z"/><path d="M12 16v6"/></symbol>
+  <symbol id="ic-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.8"/><path d="m21 15-5-5L5 21"/></symbol>
+  <symbol id="ic-download" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></symbol>
+  <symbol id="ic-sliders" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></symbol>
+  <symbol id="ic-terminal" viewBox="0 0 24 24"><path d="m4 17 6-6-6-6"/><path d="M12 19h8"/></symbol>
+  <symbol id="ic-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></symbol>
+  <symbol id="ic-toc" viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="ic-scroll" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m6 11 6-6 6 6"/><path d="m6 13 6 6 6-6"/></symbol>
+</defs>
+</svg>
+<div class="layout">
+  <!-- LEFT MENU -->
+  <aside class="side side-left">
+    <a class="brand" href="#overview"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-label="toc.nvim logo" role="img"><defs><linearGradient id="ngl" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#A9CE8B"/><stop offset="1" stop-color="#7BA85C"/></linearGradient></defs><rect width="2.4" height="34" x="13" y="12" fill="url(#ngl)" rx="1.2"/><rect width="30" height="4" x="10" y="12" fill="url(#ngl)" rx="2"/><path stroke="url(#ngl)" stroke-linecap="round" stroke-width="2.4" d="M14.2 25 h6"/><rect width="24" height="4" x="23" y="23" fill="url(#ngl)" rx="2"/><path stroke="url(#ngl)" stroke-linecap="round" stroke-width="2.4" d="M14.2 37 h6"/><rect width="18" height="4" x="23" y="35" fill="url(#ngl)" rx="2"/><path stroke="url(#ngl)" stroke-linecap="round" stroke-width="2.4" d="M14.2 45 h6"/><rect width="20" height="4" x="23" y="43" fill="#C678DD" rx="2"/><circle cx="50" cy="45" r="4.5" fill="#C678DD"/></svg><span>t<b>o</b>c.nvim</span></a>
+
+    <nav class="menu" id="menu">
+      <p class="menu-label">Guide</p>
+      <a href="#overview" data-target="overview">Overview</a>
+      <a href="#features" data-target="features">Features</a>
+      <a href="#look" data-target="look">Presets</a>
+      <a href="#install" data-target="install">Install</a>
+      <a href="#config" data-target="config">Configure</a>
+      <a href="#usage" data-target="usage">Usage</a>
+      <div class="menu-sep"></div>
+      <div class="menu-ext">
+        <a href="https://github.com/zerochae/toc.nvim"><i class="gi" aria-hidden="true"><svg><use href="#ic-github"/></svg></i>GitHub</a>
+        <a href="https://github.com/zerochae/toc.nvim/blob/master/CHANGELOG.md">Changelog</a>
+      </div>
+      <p class="menu-foot">MIT © zerochae<br>v1.3.0</p>
+    </nav>
+  </aside>
+
+  <!-- CENTER CONTENT -->
+  <main class="content">
+    <section class="hero" id="overview">
+      <p class="kicker"><i class="gi" aria-hidden="true"><svg><use href="#ic-spark"/></svg></i> Neovim · v1.3.0</p>
+      <h1>A table of contents that follows your cursor.</h1>
+      <p class="tag">A live outline in a side split. Move in the panel, the document follows — and back.</p>
+      <div class="cmd"><i class="gi" aria-hidden="true"><svg><use href="#ic-prompt"/></svg></i>{ "zerochae/toc.nvim", opts = {} }</div>
+      <div class="links">
+        <a class="gh" href="https://github.com/zerochae/toc.nvim"><i class="gi" aria-hidden="true"><svg><use href="#ic-github"/></svg></i>GitHub</a>
+        <span class="sub">MIT · zero deps</span>
+      </div>
+      <div class="hero-shot">
+        <img src="./img/boxed.png" alt="toc.nvim in Neovim: document left, table-of-contents panel docked right" />
+        <p class="cap"><b style="color:var(--accent-ink)">boxed</b> preset</p>
+      </div>
+    </section>
+
+    <section class="blk" id="features">
+      <h2><i class="gi" aria-hidden="true"><svg><use href="#ic-spark"/></svg></i>Features</h2>
+      <div class="flist">
+        <div>
+          <h3><i class="gi" aria-hidden="true"><svg><use href="#ic-follow"/></svg></i>Two-way follow</h3>
+          <p>Panel and document move together, beacon on jump.</p>
+        </div>
+        <div>
+          <h3><i class="gi" aria-hidden="true"><svg><use href="#ic-tag"/></svg></i>Typed entries</h3>
+          <p>Headings, tasks, code, callouts, tables, links, more.</p>
+        </div>
+        <div>
+          <h3><i class="gi" aria-hidden="true"><svg><use href="#ic-layout"/></svg></i>Modes &amp; presets</h3>
+          <p>Five presets, four display modes.</p>
+        </div>
+        <div>
+          <h3><i class="gi" aria-hidden="true"><svg><use href="#ic-list"/></svg></i>Numbering</h3>
+          <p><code>level</code>, <code>nested</code> or <code>flat</code>.</p>
+        </div>
+        <div>
+          <h3><i class="gi" aria-hidden="true"><svg><use href="#ic-width"/></svg></i>Auto width</h3>
+          <p>Fit the content, live-refresh on change.</p>
+        </div>
+        <div>
+          <h3><i class="gi" aria-hidden="true"><svg><use href="#ic-plug"/></svg></i>Integrations</h3>
+          <p>markview, devicons, treesitter — all optional.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="blk" id="look">
+      <h2><i class="gi" aria-hidden="true"><svg><use href="#ic-image"/></svg></i>Presets</h2>
+      <div class="gal">
+        <figure>
+          <img src="./img/compact.png" alt="toc.nvim compact preset" loading="lazy" />
+          <figcaption><b>compact</b><span>glyph-only</span></figcaption>
+        </figure>
+        <figure>
+          <img src="./img/minimal.png" alt="toc.nvim minimal preset" loading="lazy" />
+          <figcaption><b>minimal</b><span>no numbers</span></figcaption>
+        </figure>
+        <figure>
+          <img src="./img/writing.png" alt="toc.nvim writing preset" loading="lazy" />
+          <figcaption><b>writing</b><span>text-only</span></figcaption>
+        </figure>
+        <figure>
+          <img src="./img/plain.png" alt="toc.nvim plain preset" loading="lazy" />
+          <figcaption><b>plain</b><span>no Nerd Font</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="blk" id="install">
+      <h2><i class="gi" aria-hidden="true"><svg><use href="#ic-download"/></svg></i>Install</h2>
+      <div class="code">
+        <div class="cap">lua · lazy.nvim</div>
+<pre>{
+  <span class="s">"zerochae/toc.nvim"</span>,
+  ft = { <span class="s">"markdown"</span>, <span class="s">"help"</span>, <span class="s">"html"</span>, <span class="s">"org"</span>, <span class="s">"rst"</span> },
+  dependencies = { <span class="c">-- all optional</span>
+    <span class="s">"nvim-tree/nvim-web-devicons"</span>,
+    <span class="s">"OXY2DEV/markview.nvim"</span>,
+    <span class="s">"nvim-treesitter/nvim-treesitter"</span>,
+  },
+  keys = { { <span class="s">"&lt;leader&gt;t"</span>, <span class="s">"&lt;cmd&gt;Toc toggle&lt;cr&gt;"</span> } },
+  opts = {},
+}</pre>
+      </div>
+      <p class="note">Markdown and Vim help parse with no dependencies. A Nerd Font is needed for glyphs (except <b>plain</b>).</p>
+    </section>
+
+    <section class="blk" id="config">
+      <h2><i class="gi" aria-hidden="true"><svg><use href="#ic-sliders"/></svg></i>Configure</h2>
+      <div class="code" style="margin-bottom:24px;">
+        <div class="cap">everything is optional</div>
+<pre><span class="k">require</span>(<span class="s">"toc"</span>).setup {
+  preset = <span class="s">"compact"</span>,   <span class="c">-- compact|boxed|minimal|writing|plain</span>
+  width = <span class="s">"auto"</span>,      <span class="c">-- or a column count</span>
+  numbers = <span class="s">"level"</span>,   <span class="c">-- level|nested|flat|false</span>
+  max_level = <span class="b">nil</span>,     <span class="c">-- e.g. 2 hides below H2</span>
+}</pre>
+      </div>
+      <div class="rows">
+        <div class="r"><span class="key">position</span><span class="val">left or right split.</span></div>
+        <div class="r"><span class="key">follow_cursor</span><span class="val">TOC drives the source.</span></div>
+        <div class="r"><span class="key">auto_refresh</span><span class="val">live, debounced, on save.</span></div>
+        <div class="r"><span class="key">mode</span><span class="val">glyph + number + text.</span></div>
+      </div>
+      <p class="note"><code class="ic">:help toc.nvim</code> for the full option list.</p>
+    </section>
+
+    <section class="blk" id="usage">
+      <h2><i class="gi" aria-hidden="true"><svg><use href="#ic-terminal"/></svg></i>Usage</h2>
+      <div class="rows">
+        <div class="r"><span class="key"><kbd>&lt;CR&gt;</kbd></span><span class="val">Jump &amp; focus source.</span></div>
+        <div class="r"><span class="key"><kbd>o</kbd></span><span class="val">Jump, stay in panel.</span></div>
+        <div class="r"><span class="key"><kbd>J</kbd> / <kbd>K</kbd></span><span class="val">Next / previous.</span></div>
+        <div class="r"><span class="key"><kbd>R</kbd> · <kbd>q</kbd></span><span class="val">Refresh · close.</span></div>
+      </div>
+      <p class="note" style="margin-bottom:14px;">Formats:</p>
+      <div class="fmts">
+        <span><i class="gi" aria-hidden="true"><svg><use href="#ic-file"/></svg></i><b>Markdown</b></span>
+        <span><i class="gi" aria-hidden="true"><svg><use href="#ic-file"/></svg></i><b>Vim help</b></span>
+        <span><i class="gi" aria-hidden="true"><svg><use href="#ic-file"/></svg></i><b>Org</b></span>
+        <span><i class="gi" aria-hidden="true"><svg><use href="#ic-file"/></svg></i><b>reStructuredText</b></span>
+        <span class="opt"><i class="gi" aria-hidden="true"><svg><use href="#ic-file"/></svg></i><b>HTML</b> treesitter</span>
+      </div>
+
+      <div class="foot">
+        <span>MIT © zerochae · v1.3.0</span>
+        <span><a href="https://github.com/zerochae/toc.nvim">GitHub</a> · <a href="https://github.com/zerochae/toc.nvim/blob/master/CHANGELOG.md">Changelog</a></span>
+      </div>
+    </section>
+  </main>
+
+  <!-- RIGHT TOC (live demo of the plugin) -->
+  <aside class="side side-right">
+    <div class="tocpanel" id="tocpanel">
+      <div class="toc-title"><i class="gi" aria-hidden="true"><svg><use href="#ic-toc"/></svg></i>On this page</div>
+      <a class="toc-e" href="#overview" data-target="overview"><span class="arw">▸</span>Overview</a>
+      <a class="toc-e" href="#features" data-target="features"><span class="tree">├╴</span><span class="arw">▸</span>Features</a>
+      <a class="toc-e" href="#look" data-target="look"><span class="tree">├╴</span><span class="arw">▸</span>Presets</a>
+      <a class="toc-e" href="#install" data-target="install"><span class="tree">├╴</span><span class="arw">▸</span>Install</a>
+      <a class="toc-e" href="#config" data-target="config"><span class="tree">├╴</span><span class="arw">▸</span>Configure</a>
+      <a class="toc-e" href="#usage" data-target="usage"><span class="tree">╰╴</span><span class="arw">▸</span>Usage</a>
+    </div>
+    <p class="toc-hint"><i class="gi" aria-hidden="true"><svg><use href="#ic-scroll"/></svg></i>follows your scroll — like the plugin</p>
+  </aside>
+</div>
+<script src="./main.js" defer></script>
+</body>
+</html>
