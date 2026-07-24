@@ -1,0 +1,510 @@
+<title>toc.nvim — a fancy table of contents for Neovim</title>
+<style>
+  @font-face {
+    font-family: "JBMono"; font-style: normal; font-weight: 400; font-display: swap;
+    src: url("{{FONT_REGULAR}}") format("woff2");
+  }
+  @font-face {
+    font-family: "JBMono"; font-style: normal; font-weight: 700; font-display: swap;
+    src: url("{{FONT_BOLD}}") format("woff2");
+  }
+  :root {
+    --bg: #fdfcfd;
+    --ink: #17131a;
+    --muted: #6d6672;
+    --faint: #9a929f;
+    --line: #ece7ea;
+    --line-strong: #ded7dc;
+    --accent: #c678dd;
+    --accent-ink: #9b46bd;
+    --accent-soft: #f3e8f8;
+    --code-bg: #f7f3f9;
+    --shot-bg: #16101a;
+    --shot-line: #2c2130;
+    --panel-bg: #faf6fb;
+    --mono: "JBMono", ui-monospace, "JetBrains Mono", "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #100c11; --ink: #ececef; --muted: #9a909c; --faint: #6f6672;
+      --line: #241d27; --line-strong: #342b38; --accent: #c678dd; --accent-ink: #d3a0e6;
+      --accent-soft: #241a2b; --code-bg: #171220; --panel-bg: #16111c;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #fdfcfd; --ink: #17131a; --muted: #6d6672; --faint: #9a929f;
+    --line: #ece7ea; --line-strong: #ded7dc; --accent: #c678dd; --accent-ink: #9b46bd;
+    --accent-soft: #f3e8f8; --code-bg: #f7f3f9; --panel-bg: #faf6fb;
+  }
+  :root[data-theme="dark"] {
+    --bg: #100c11; --ink: #ececef; --muted: #9a909c; --faint: #6f6672;
+    --line: #241d27; --line-strong: #342b38; --accent: #c678dd; --accent-ink: #d3a0e6;
+    --accent-soft: #241a2b; --code-bg: #171220; --panel-bg: #16111c;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 16px; line-height: 1.7;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  /* OneDark palette (code blocks stay dark in both themes, like a screenshot) */
+  :root {
+    --od-bg: #282c34; --od-cap: #1b1e24; --od-edge: #14171c; --od-fg: #abb2bf;
+    --od-comment: #5c6370; --od-purple: #c678dd; --od-green: #98c379;
+    --od-blue: #61afef; --od-red: #e06c75; --od-orange: #d19a66; --od-lua: #51a0cf;
+  }
+  .luaicon { display: inline-block; width: 16px; height: 16px; flex: none; }
+  a { color: var(--accent-ink); text-decoration: none; }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  .gi { display: inline-flex; align-items: center; justify-content: center; color: var(--accent); line-height: 0; }
+  .gi svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---------- 3-column layout ---------- */
+  .layout {
+    display: grid;
+    grid-template-columns: 212px minmax(0, 760px);
+    justify-content: center;
+    gap: 46px;
+    max-width: 1260px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  .side { position: sticky; top: 28px; align-self: start; max-height: calc(100vh - 56px); overflow: auto; }
+
+  /* ---------- left menu ---------- */
+  .side-left { padding-top: 26px; }
+  .brand { display: inline-flex; align-items: center; gap: 9px; font-family: var(--mono); font-weight: 700; font-size: 1.02rem; color: var(--ink); letter-spacing: -0.01em; margin-bottom: 30px; }
+  .brand svg { width: 24px; height: 24px; display: block; }
+  .brand b { color: var(--accent); }
+  .menu { display: flex; flex-direction: column; gap: 2px; }
+  .menu-label { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--faint); margin: 0 0 10px; }
+  .menu a { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); padding: 6px 10px; border-radius: 6px; border-left: 2px solid transparent; }
+  .menu a:hover { color: var(--ink); background: var(--accent-soft); text-decoration: none; }
+  .menu a.active { color: var(--accent-ink); border-left-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+  .menu-sep { height: 1px; background: var(--line); margin: 20px 0; }
+  .menu-ext a { display: inline-flex; align-items: center; gap: 7px; }
+  .menu-foot { font-family: var(--mono); font-size: 0.7rem; color: var(--faint); margin-top: 26px; line-height: 1.7; }
+
+  /* ---------- right TOC panel (the plugin, live) ---------- */
+  .side-right { padding-top: 30px; }
+  .tocpanel {
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.5;
+    background: var(--panel-bg); border: 1px solid var(--line);
+    border-radius: 9px; padding: 12px 10px;
+  }
+  .toc-title { display: flex; align-items: center; gap: 7px; color: var(--accent-ink); font-weight: 700; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 6px 10px; }
+  .toc-title .gi { font-size: 0.95rem; }
+  .toc-e {
+    display: flex; align-items: center; white-space: nowrap;
+    padding: 4px 8px; border-radius: 5px; color: var(--muted);
+    border-left: 2px solid transparent; position: relative;
+  }
+  .toc-e:hover { color: var(--ink); text-decoration: none; background: var(--accent-soft); }
+  .toc-e .tree { color: var(--faint); }
+  .toc-e .arw { color: var(--accent); opacity: 0.55; margin-right: 5px; }
+  .toc-e.active { color: var(--ink); background: var(--accent-soft); border-left-color: var(--accent); font-weight: 600; }
+  .toc-e.active .arw { opacity: 1; }
+  .toc-e.flash { animation: beacon 0.9s ease-out; }
+  @keyframes beacon {
+    0% { background: color-mix(in srgb, var(--accent) 42%, transparent); }
+    100% { background: var(--accent-soft); }
+  }
+  @media (prefers-reduced-motion: reduce) { .toc-e.flash { animation: none; } }
+  .toc-hint { font-family: var(--mono); font-size: 0.66rem; color: var(--faint); margin: 12px 6px 0; display: flex; align-items: center; gap: 6px; line-height: 1.5; }
+
+  /* ---------- content ---------- */
+  .content { min-width: 0; padding-bottom: 40px; }
+
+  .hero { position: relative; padding: 64px 0 40px; }
+  .hero::before {
+    content: ""; position: absolute; z-index: -1; top: -30px; left: -40px;
+    width: 300px; height: 300px; pointer-events: none;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 68%);
+    opacity: 0.16; filter: blur(24px);
+  }
+  .kicker { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent-ink); margin: 0 0 18px; }
+  .wordmark {
+    font-family: var(--mono); font-weight: 800; font-size: clamp(2.7rem, 7vw, 4.2rem);
+    line-height: 1; letter-spacing: -0.035em; margin: 0 0 26px;
+    color: var(--accent); /* solid fallback if background-clip:text is unsupported */
+  }
+  @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    .wordmark {
+      background: linear-gradient(115deg, var(--accent-bright), var(--accent) 55%, var(--accent-ink));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .wordmark .dot { -webkit-text-fill-color: var(--accent); }
+  }
+  .wordmark .dot { color: var(--accent); }
+  .hero .links { margin-top: 22px; display: flex; gap: 20px; align-items: center; font-family: var(--mono); font-size: 0.85rem; }
+  .hero .links .gh { display: inline-flex; align-items: center; gap: 7px; color: var(--ink); border-bottom: 1px solid var(--accent); padding-bottom: 2px; }
+  .hero .links .gh:hover { color: var(--accent-ink); text-decoration: none; }
+  .hero .links .sub { color: var(--faint); }
+  /* text-based editor split (left: markdown source, right: live TOC) */
+  .editor { margin: 40px 0 0; background: var(--od-bg); border: 1px solid var(--od-edge); border-radius: 11px; overflow: hidden; box-shadow: 0 24px 60px -30px rgba(120,40,150,0.5); font-family: var(--mono); font-size: 12.5px; line-height: 1.7; }
+  .editor .bar { display: flex; align-items: center; gap: 7px; padding: 9px 13px; background: var(--od-cap); border-bottom: 1px solid var(--od-edge); }
+  .editor .bar i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+  .editor .bar .dr { background: #e06c75; } .editor .bar .dy { background: #e5c07b; } .editor .bar .dg { background: #98c379; }
+  .editor .bar .name { margin-left: 8px; color: #8a919e; font-size: 11px; }
+  .editor .panes { display: grid; grid-template-columns: 1fr 15.5rem; }
+  @media (max-width: 560px) { .editor .panes { grid-template-columns: 1fr 11.5rem; font-size: 11px; } }
+  .src { padding: 12px 0 14px; overflow-x: auto; color: var(--od-fg); }
+  .src .row { display: block; padding: 0 14px; }
+  .src .ln { display: inline-block; width: 2em; text-align: right; margin-right: 1em; color: #4b5263; user-select: none; }
+  .src .row.on { background: rgba(198,120,221,0.12); box-shadow: inset 3px 0 0 var(--accent); }
+  .src .row.beacon { animation: srcflash 0.9s ease-out; }
+  @keyframes srcflash { 0% { background: rgba(198,120,221,0.4); } 100% { background: rgba(198,120,221,0.12); } }
+  .tabbar { display: flex; gap: 3px; padding: 6px 9px; background: var(--od-cap); border-bottom: 1px solid var(--od-edge); overflow-x: auto; }
+  .tab { font-family: var(--mono); font-size: 11px; color: #8a919e; background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 3px 10px; cursor: pointer; white-space: nowrap; }
+  .tab:hover { color: var(--od-fg); }
+  .tab.on { color: var(--accent); background: rgba(198,120,221,0.14); border-color: rgba(198,120,221,0.42); }
+  .tocwrap { border-left: 1px solid var(--od-edge); background: var(--od-cap); overflow: hidden; }
+  .toc { padding: 11px 12px; }
+  .toc[hidden] { display: none; }
+  .toc .tt { color: var(--accent); font-weight: 700; margin-bottom: 7px; white-space: pre; }
+  .toc .e { display: block; white-space: pre; padding: 1px 7px; border-radius: 4px; }
+  .toc .e .tr { color: #4b5263; } .toc .e .nm { color: #5c6370; }
+  .toc .e.on { background: rgba(198,120,221,0.16); box-shadow: inset 2px 0 0 var(--accent); }
+  @media (prefers-reduced-motion: reduce) { .src .row.beacon { animation: none; } }
+  /* markview-style level + element colours (shared by source and TOC) */
+  .cl1 { color: #e06c75; } .cl2 { color: #e5c07b; } .cl3 { color: #61afef; } .cl4 { color: #c678dd; }
+  .cok { color: #98c379; } .cno { color: #5c6370; } .ccode { color: #56b6c2; }
+  .cnote { color: #61afef; } .cstr { color: #98c379; } .cmt { color: #5c6370; } .cmark { color: var(--accent); }
+  .ctable { color: #c678dd; } .cwarn { color: #e5c07b; } .ctip { color: #98c379; }
+
+  section.blk { padding: 56px 0; border-top: 1px solid var(--line); scroll-margin-top: 28px; }
+  .hero { scroll-margin-top: 28px; }
+  h2 { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-weight: 700; font-size: 1.28rem; letter-spacing: -0.01em; margin: 0 0 26px; }
+  h2 .gi { font-size: 1.1rem; }
+  code, kbd { font-family: var(--mono); }
+  .ic { font-family: var(--mono); color: var(--accent-ink); font-size: 0.9em; background: var(--accent-soft); padding: 1px 6px; border-radius: 4px; }
+
+  .flist { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 36px; }
+  @media (max-width: 620px) { .flist { grid-template-columns: 1fr; gap: 22px; } }
+  .flist h3 { display: flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 0.94rem; font-weight: 700; margin: 0 0 4px; color: var(--ink); }
+  .flist h3 .gi { font-size: 1.05rem; flex: none; }
+  .flist p { margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.55; }
+  .flist code { color: var(--accent-ink); font-size: 0.86em; }
+
+  .code { background: var(--od-bg); border: 1px solid var(--od-edge); border-radius: 10px; overflow: hidden; box-shadow: 0 18px 44px -26px rgba(80,10,60,0.5); }
+  .code .cap { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 0.73rem; letter-spacing: 0.02em; color: #8a919e; padding: 9px 14px; background: var(--od-cap); border-bottom: 1px solid var(--od-edge); }
+  .code .cap .fname { margin-left: auto; color: var(--od-comment); }
+  pre { margin: 0; padding: 16px 18px; overflow-x: auto; font-family: var(--mono); font-size: 0.84rem; line-height: 1.75; color: var(--od-fg); background: var(--od-bg); }
+  .tok-k { color: var(--od-purple); }
+  .tok-s { color: var(--od-green); }
+  .tok-c { color: var(--od-comment); font-style: italic; }
+  .tok-f { color: var(--od-blue); }
+  .tok-p { color: var(--od-red); }
+  .tok-n { color: var(--od-orange); }
+
+  .presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+  .preset { margin: 0; background: var(--od-bg); border: 1px solid var(--od-edge); border-radius: 10px; overflow: hidden; box-shadow: 0 14px 34px -26px rgba(80,10,60,0.5); }
+  .preset .cap { display: flex; align-items: baseline; gap: 8px; padding: 9px 14px; background: var(--od-cap); border-bottom: 1px solid var(--od-edge); font-family: var(--mono); font-size: 0.73rem; }
+  .preset .cap b { color: var(--accent); font-weight: 700; }
+  .preset .cap span { color: var(--od-comment); font-size: 0.9em; margin-left: auto; }
+  .preset pre { margin: 0; padding: 13px 15px; overflow-x: auto; font-family: var(--mono); font-size: 12px; line-height: 1.5; color: var(--od-fg); background: var(--od-bg); white-space: pre; }
+
+  .rows { display: flex; flex-direction: column; }
+  .rows .r { display: grid; grid-template-columns: 10rem 1fr; gap: 18px; padding: 12px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+  @media (max-width: 560px) { .rows .r { grid-template-columns: 1fr; gap: 3px; } }
+  .rows .r:last-child { border-bottom: none; }
+  .rows .r .key { font-family: var(--mono); font-size: 0.85rem; color: var(--ink); }
+  .rows .r .val { color: var(--muted); font-size: 0.9rem; }
+  kbd { font-size: 0.8em; background: var(--code-bg); border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 5px; padding: 2px 7px; color: var(--ink); }
+
+  .fmts { display: flex; flex-wrap: wrap; gap: 8px; font-family: var(--mono); font-size: 0.82rem; }
+  .fmts span { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line-strong); border-radius: 6px; padding: 5px 11px; color: var(--muted); }
+  .fmts span.opt { border-style: dashed; }
+  .fmts .gi { font-size: 0.92rem; }
+  .fmts .fdev { font-size: 1.02rem; line-height: 1; }
+  .fmts b { color: var(--ink); font-weight: 600; }
+
+  .note { color: var(--faint); font-family: var(--mono); font-size: 0.76rem; margin-top: 18px; line-height: 1.6; }
+
+  .foot { border-top: 1px solid var(--line); margin-top: 48px; padding-top: 26px; font-family: var(--mono); font-size: 0.76rem; color: var(--faint); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .foot a { color: var(--muted); }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 1160px) {
+    .layout { grid-template-columns: 200px minmax(0, 1fr); gap: 40px; }
+    .side-right { display: none; }
+  }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; gap: 0; padding: 0; }
+    .side-left {
+      position: sticky; top: 0; z-index: 10; max-height: none; padding: 0 20px;
+      background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; gap: 18px; overflow-x: auto;
+    }
+    .brand { margin: 0; flex: none; padding: 12px 0; }
+    .menu-label, .menu-sep, .menu-ext, .menu-foot { display: none; }
+    .menu { flex-direction: row; gap: 4px; flex: none; }
+    .menu a { border-left: none; border-bottom: 2px solid transparent; white-space: nowrap; padding: 6px 8px; }
+    .menu a.active { border-left: none; border-bottom-color: var(--accent); background: transparent; }
+    .content { padding: 0 20px 40px; }
+    .hero { padding: 40px 0 32px; }
+  }
+</style>
+
+<svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+<defs>
+  <symbol id="ic-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10z"/></symbol>
+  <symbol id="ic-prompt" viewBox="0 0 24 24"><path d="m6 17 5-5-5-5"/><path d="M13 19h5"/></symbol>
+  <symbol id="ic-github" viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12 12 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
+  <symbol id="ic-follow" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></symbol>
+  <symbol id="ic-tag" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 3 12V5a2 2 0 0 1 2-2h7a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.6z"/><circle cx="7.5" cy="7.5" r="1.4"/></symbol>
+  <symbol id="ic-layout" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></symbol>
+  <symbol id="ic-list" viewBox="0 0 24 24"><path d="M10 6h11"/><path d="M10 12h11"/><path d="M10 18h11"/><path d="M4 5h1v4"/><path d="M4 9h2"/><path d="M4 14h2v1.5L4.5 17H6"/></symbol>
+  <symbol id="ic-width" viewBox="0 0 24 24"><path d="m8 9-3 3 3 3"/><path d="m16 9 3 3-3 3"/><path d="M5 12h14"/></symbol>
+  <symbol id="ic-plug" viewBox="0 0 24 24"><path d="M9 2v6"/><path d="M15 2v6"/><path d="M6 8h12v2a6 6 0 0 1-12 0z"/><path d="M12 16v6"/></symbol>
+  <symbol id="ic-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.8"/><path d="m21 15-5-5L5 21"/></symbol>
+  <symbol id="ic-download" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></symbol>
+  <symbol id="ic-sliders" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></symbol>
+  <symbol id="ic-terminal" viewBox="0 0 24 24"><path d="m4 17 6-6-6-6"/><path d="M12 19h8"/></symbol>
+  <symbol id="ic-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></symbol>
+  <symbol id="ic-toc" viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="ic-scroll" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m6 11 6-6 6 6"/><path d="m6 13 6 6 6-6"/></symbol>
+  <symbol id="ic-lua" viewBox="0 0 24 24"><circle cx="13.5" cy="10.5" r="7" fill="#51a0cf"/><circle cx="16.7" cy="7.3" r="2.3" fill="#fff"/><circle cx="5.6" cy="18.4" r="2.6" fill="#51a0cf"/><circle cx="6.5" cy="17.5" r="0.85" fill="#fff"/></symbol>
+</defs>
+</svg>
+<div class="layout">
+  <!-- LEFT MENU -->
+  <aside class="side side-left">
+    <a class="brand" href="#overview"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-label="toc.nvim logo" role="img"><defs><linearGradient id="ngl" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#A9CE8B"/><stop offset="1" stop-color="#7BA85C"/></linearGradient></defs><rect width="2.4" height="34" x="13" y="12" fill="url(#ngl)" rx="1.2"/><rect width="30" height="4" x="10" y="12" fill="url(#ngl)" rx="2"/><path stroke="url(#ngl)" stroke-linecap="round" stroke-width="2.4" d="M14.2 25 h6"/><rect width="24" height="4" x="23" y="23" fill="url(#ngl)" rx="2"/><path stroke="url(#ngl)" stroke-linecap="round" stroke-width="2.4" d="M14.2 37 h6"/><rect width="18" height="4" x="23" y="35" fill="url(#ngl)" rx="2"/><path stroke="url(#ngl)" stroke-linecap="round" stroke-width="2.4" d="M14.2 45 h6"/><rect width="20" height="4" x="23" y="43" fill="#C678DD" rx="2"/><circle cx="50" cy="45" r="4.5" fill="#C678DD"/></svg><span>t<b>o</b>c.nvim</span></a>
+
+    <nav class="menu" id="menu">
+      <a href="#overview" data-target="overview">Overview</a>
+      <a href="#install" data-target="install">Install</a>
+      <a href="#config" data-target="config">Configure</a>
+      <a href="#usage" data-target="usage">Usage</a>
+      <div class="menu-sep"></div>
+      <div class="menu-ext">
+        <a href="https://github.com/zerochae/toc.nvim"><i class="gi" aria-hidden="true"><svg><use href="#ic-github"/></svg></i>GitHub</a>
+        <a href="https://github.com/zerochae/toc.nvim/blob/master/CHANGELOG.md">Changelog</a>
+      </div>
+      <p class="menu-foot">MIT © zerochae</p>
+    </nav>
+  </aside>
+
+  <!-- CENTER CONTENT -->
+  <main class="content">
+    <section class="hero" id="overview">
+      {{HERO_SPLIT}}
+    </section>
+
+    <section class="blk" id="features">
+      <div class="flist">
+        <div>
+          <h3><i class="gi" aria-hidden="true"><svg><use href="#ic-follow"/></svg></i>Two-way follow</h3>
+          <p>Panel and document move together, beacon on jump.</p>
+        </div>
+        <div>
+          <h3><i class="gi" aria-hidden="true"><svg><use href="#ic-tag"/></svg></i>Typed entries</h3>
+          <p>Headings, tasks, code, callouts, tables, links, more.</p>
+        </div>
+        <div>
+          <h3><i class="gi" aria-hidden="true"><svg><use href="#ic-layout"/></svg></i>Modes &amp; presets</h3>
+          <p>Five presets, four display modes.</p>
+        </div>
+        <div>
+          <h3><i class="gi" aria-hidden="true"><svg><use href="#ic-list"/></svg></i>Numbering</h3>
+          <p><code>level</code>, <code>nested</code> or <code>flat</code>.</p>
+        </div>
+        <div>
+          <h3><i class="gi" aria-hidden="true"><svg><use href="#ic-width"/></svg></i>Auto width</h3>
+          <p>Fit the content, live-refresh on change.</p>
+        </div>
+        <div>
+          <h3><i class="gi" aria-hidden="true"><svg><use href="#ic-plug"/></svg></i>Integrations</h3>
+          <p>markview, devicons, treesitter — all optional.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Presets section hidden for now; uncomment to restore (also re-add nav/TOC refs + "look" in ids)
+    <section class="blk" id="look">
+      <h2><i class="gi" aria-hidden="true"><svg><use href="#ic-image"/></svg></i>Presets</h2>
+      <div class="presets">
+        <figure class="preset"><div class="cap"><b>compact</b><span>glyph + number</span></div><pre>{{PRESET_COMPACT}}</pre></figure>
+        <figure class="preset"><div class="cap"><b>boxed</b><span>box-drawing tree</span></div><pre>{{PRESET_BOXED}}</pre></figure>
+        <figure class="preset"><div class="cap"><b>writing</b><span>prose outline</span></div><pre>{{PRESET_WRITING}}</pre></figure>
+        <figure class="preset"><div class="cap"><b>plain</b><span>no Nerd Font</span></div><pre>{{PRESET_PLAIN}}</pre></figure>
+      </div>
+    </section>
+    -->
+
+    <section class="blk" id="install">
+      <h2><i class="gi" aria-hidden="true"><svg><use href="#ic-download"/></svg></i>Install</h2>
+      <div class="code">
+        <div class="cap"><svg class="luaicon" aria-hidden="true"><use href="#ic-lua"/></svg>lua<span class="fname">lazy.nvim</span></div>
+<pre>{
+  <span class="tok-s">"zerochae/toc.nvim"</span>,
+  <span class="tok-p">ft</span> = { <span class="tok-s">"markdown"</span>, <span class="tok-s">"help"</span>, <span class="tok-s">"html"</span>, <span class="tok-s">"org"</span>, <span class="tok-s">"rst"</span> },
+  <span class="tok-p">dependencies</span> = { <span class="tok-c">-- all optional</span>
+    <span class="tok-s">"nvim-tree/nvim-web-devicons"</span>,
+    <span class="tok-s">"OXY2DEV/markview.nvim"</span>,
+    <span class="tok-s">"nvim-treesitter/nvim-treesitter"</span>,
+  },
+  <span class="tok-p">keys</span> = { { <span class="tok-s">"&lt;leader&gt;t"</span>, <span class="tok-s">"&lt;cmd&gt;Toc toggle&lt;cr&gt;"</span> } },
+  <span class="tok-p">opts</span> = {},
+}</pre>
+      </div>
+      <p class="note">Markdown and Vim help parse with no dependencies. A Nerd Font is needed for glyphs (except <b>plain</b>).</p>
+    </section>
+
+    <section class="blk" id="config">
+      <h2><i class="gi" aria-hidden="true"><svg><use href="#ic-sliders"/></svg></i>Configure</h2>
+      <div class="code" style="margin-bottom:24px;">
+        <div class="cap"><svg class="luaicon" aria-hidden="true"><use href="#ic-lua"/></svg>lua<span class="fname">optional</span></div>
+<pre><span class="tok-f">require</span>(<span class="tok-s">"toc"</span>).<span class="tok-f">setup</span> {
+  <span class="tok-p">preset</span> = <span class="tok-s">"compact"</span>,   <span class="tok-c">-- compact|boxed|minimal|writing|plain</span>
+  <span class="tok-p">width</span> = <span class="tok-s">"auto"</span>,      <span class="tok-c">-- or a column count</span>
+  <span class="tok-p">numbers</span> = <span class="tok-s">"level"</span>,   <span class="tok-c">-- level|nested|flat|false</span>
+  <span class="tok-p">max_level</span> = <span class="tok-n">nil</span>,     <span class="tok-c">-- e.g. 2 hides below H2</span>
+}</pre>
+      </div>
+      <div class="rows">
+        <div class="r"><span class="key">position</span><span class="val">left or right split.</span></div>
+        <div class="r"><span class="key">follow_cursor</span><span class="val">TOC drives the source.</span></div>
+        <div class="r"><span class="key">auto_refresh</span><span class="val">live, debounced, on save.</span></div>
+        <div class="r"><span class="key">mode</span><span class="val">glyph + number + text.</span></div>
+      </div>
+      <p class="note"><code class="ic">:help toc.nvim</code> for the full option list.</p>
+    </section>
+
+    <section class="blk" id="usage">
+      <h2><i class="gi" aria-hidden="true"><svg><use href="#ic-terminal"/></svg></i>Usage</h2>
+      <div class="rows">
+        <div class="r"><span class="key"><kbd>&lt;CR&gt;</kbd></span><span class="val">Jump &amp; focus source.</span></div>
+        <div class="r"><span class="key"><kbd>o</kbd></span><span class="val">Jump, stay in panel.</span></div>
+        <div class="r"><span class="key"><kbd>J</kbd> / <kbd>K</kbd></span><span class="val">Next / previous.</span></div>
+        <div class="r"><span class="key"><kbd>R</kbd> · <kbd>q</kbd></span><span class="val">Refresh · close.</span></div>
+      </div>
+      <p class="note" style="margin-bottom:14px;">Formats:</p>
+      <div class="fmts">{{FORMATS}}</div>
+
+      <div class="foot">
+        <span>MIT © zerochae</span>
+        <span><a href="https://github.com/zerochae/toc.nvim">GitHub</a> · <a href="https://github.com/zerochae/toc.nvim/blob/master/CHANGELOG.md">Changelog</a></span>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  // hero preset tabs: swap which TOC panel is shown
+  (function () {
+    var ed = document.querySelector(".editor");
+    if (!ed) return;
+    var tabs = ed.querySelectorAll(".tab");
+    var panels = ed.querySelectorAll(".toc");
+    tabs.forEach(function (t) {
+      t.addEventListener("click", function () {
+        var p = t.getAttribute("data-preset");
+        tabs.forEach(function (x) { x.classList.toggle("on", x === t); });
+        panels.forEach(function (pl) { pl.hidden = pl.getAttribute("data-preset") !== p; });
+      });
+    });
+  })();
+
+  // hero split: cycle the "cursor" through headings, flashing source + TOC in sync
+  (function () {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return;
+    var seq = ["1", "3", "4", "7", "8", "10"];
+    var i = 0;
+    function tick() {
+      var k = seq[i];
+      var rows = document.querySelectorAll(".editor .src .row");
+      var ents = document.querySelectorAll(".editor .toc .e");
+      rows.forEach(function (r) { r.classList.remove("on", "beacon"); });
+      ents.forEach(function (e) { e.classList.remove("on"); });
+      var row = document.querySelector('.editor .src .row[data-k="' + k + '"]');
+      var ent = document.querySelector('.editor .toc .e[data-k="' + k + '"]');
+      if (row) { void row.offsetWidth; row.classList.add("on", "beacon"); }
+      if (ent) ent.classList.add("on");
+      i = (i + 1) % seq.length;
+    }
+    if (document.querySelector(".editor")) { tick(); setInterval(tick, 1900); }
+  })();
+
+  (function () {
+    var ids = ["overview", "install", "config", "usage"];
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    function pick(sel) {
+      return ids.map(function (id) {
+        return document.querySelector(sel + '[data-target="' + id + '"]');
+      });
+    }
+    var tocLinks = pick(".toc-e");
+    var menuLinks = pick(".menu a");
+    var els = ids.map(function (id) { return document.getElementById(id); });
+    var current = null;
+
+    function setActive(id) {
+      if (id === current) return;
+      current = id;
+      ids.forEach(function (x, i) {
+        var on = x === id;
+        var t = tocLinks[i], m = menuLinks[i];
+        if (t) {
+          t.classList.toggle("active", on);
+          if (on && !reduce) {
+            t.classList.remove("flash");
+            void t.offsetWidth;
+            t.classList.add("flash");
+          }
+        }
+        if (m) m.classList.toggle("active", on);
+      });
+    }
+
+    // Deterministic scroll-spy: the active section is the last one whose top
+    // has scrolled above a probe line near the top of the viewport.
+    var PROBE = 120;
+    function compute() {
+      var doc = document.documentElement;
+      if (window.innerHeight + window.scrollY >= doc.scrollHeight - 4) {
+        setActive(ids[ids.length - 1]); // pinned to bottom → last section
+        return;
+      }
+      var active = ids[0];
+      for (var i = 0; i < els.length; i++) {
+        if (!els[i]) continue;
+        if (els[i].getBoundingClientRect().top - PROBE <= 0) active = ids[i];
+        else break; // sections are in document order; the rest are lower
+      }
+      setActive(active);
+    }
+
+    var ticking = false;
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () { compute(); ticking = false; });
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+
+    // Clicking a menu / TOC entry activates it immediately (before the smooth
+    // scroll settles), so the two panels never lag behind the click.
+    tocLinks.concat(menuLinks).forEach(function (a) {
+      if (!a) return;
+      a.addEventListener("click", function () {
+        var id = a.getAttribute("data-target");
+        if (id) setActive(id);
+      });
+    });
+
+    compute();
+  })();
+</script>

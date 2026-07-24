@@ -7,6 +7,8 @@
 <meta name="description" content="A fancy table of contents for Markdown and more in a Neovim side split, with two-way cursor follow." />
 <meta name="color-scheme" content="light dark" />
 <link rel="icon" type="image/svg+xml" href="./logo.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 <link rel="stylesheet" href="./styles.css" />
 <meta property="og:title" content="toc.nvim" />
 <meta property="og:description" content="A fancy table of contents for Neovim, with two-way cursor follow." />
@@ -30,6 +32,7 @@
   <symbol id="ic-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></symbol>
   <symbol id="ic-toc" viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></symbol>
   <symbol id="ic-scroll" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m6 11 6-6 6 6"/><path d="m6 13 6 6 6-6"/></symbol>
+  <symbol id="ic-lua" viewBox="0 0 24 24"><circle cx="13.5" cy="10.5" r="7" fill="#51a0cf"/><circle cx="16.7" cy="7.3" r="2.3" fill="#fff"/><circle cx="5.6" cy="18.4" r="2.6" fill="#51a0cf"/><circle cx="6.5" cy="17.5" r="0.85" fill="#fff"/></symbol>
 </defs>
 </svg>
 <div class="layout">
@@ -38,10 +41,7 @@
     <a class="brand" href="#overview"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-label="toc.nvim logo" role="img"><defs><linearGradient id="ngl" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#A9CE8B"/><stop offset="1" stop-color="#7BA85C"/></linearGradient></defs><rect width="2.4" height="34" x="13" y="12" fill="url(#ngl)" rx="1.2"/><rect width="30" height="4" x="10" y="12" fill="url(#ngl)" rx="2"/><path stroke="url(#ngl)" stroke-linecap="round" stroke-width="2.4" d="M14.2 25 h6"/><rect width="24" height="4" x="23" y="23" fill="url(#ngl)" rx="2"/><path stroke="url(#ngl)" stroke-linecap="round" stroke-width="2.4" d="M14.2 37 h6"/><rect width="18" height="4" x="23" y="35" fill="url(#ngl)" rx="2"/><path stroke="url(#ngl)" stroke-linecap="round" stroke-width="2.4" d="M14.2 45 h6"/><rect width="20" height="4" x="23" y="43" fill="#C678DD" rx="2"/><circle cx="50" cy="45" r="4.5" fill="#C678DD"/></svg><span>t<b>o</b>c.nvim</span></a>
 
     <nav class="menu" id="menu">
-      <p class="menu-label">Guide</p>
       <a href="#overview" data-target="overview">Overview</a>
-      <a href="#features" data-target="features">Features</a>
-      <a href="#look" data-target="look">Presets</a>
       <a href="#install" data-target="install">Install</a>
       <a href="#config" data-target="config">Configure</a>
       <a href="#usage" data-target="usage">Usage</a>
@@ -50,29 +50,17 @@
         <a href="https://github.com/zerochae/toc.nvim"><i class="gi" aria-hidden="true"><svg><use href="#ic-github"/></svg></i>GitHub</a>
         <a href="https://github.com/zerochae/toc.nvim/blob/master/CHANGELOG.md">Changelog</a>
       </div>
-      <p class="menu-foot">MIT © zerochae<br>v1.3.0</p>
+      <p class="menu-foot">MIT © zerochae</p>
     </nav>
   </aside>
 
   <!-- CENTER CONTENT -->
   <main class="content">
     <section class="hero" id="overview">
-      <p class="kicker"><i class="gi" aria-hidden="true"><svg><use href="#ic-spark"/></svg></i> Neovim · v1.3.0</p>
-      <h1>A table of contents that follows your cursor.</h1>
-      <p class="tag">A live outline in a side split. Move in the panel, the document follows — and back.</p>
-      <div class="cmd"><i class="gi" aria-hidden="true"><svg><use href="#ic-prompt"/></svg></i>{ "zerochae/toc.nvim", opts = {} }</div>
-      <div class="links">
-        <a class="gh" href="https://github.com/zerochae/toc.nvim"><i class="gi" aria-hidden="true"><svg><use href="#ic-github"/></svg></i>GitHub</a>
-        <span class="sub">MIT · zero deps</span>
-      </div>
-      <div class="hero-shot">
-        <img src="./img/boxed.png" alt="toc.nvim in Neovim: document left, table-of-contents panel docked right" />
-        <p class="cap"><b style="color:var(--accent-ink)">boxed</b> preset</p>
-      </div>
+      <div class="editor" aria-label="toc.nvim as text: markdown source on the left, table-of-contents panel on the right"><div class="bar"><i class="dr"></i><i class="dy"></i><i class="dg"></i><span class="name">demo.md</span></div><div class="tabbar"><button class="tab on" data-preset="default">default</button><button class="tab" data-preset="compact">compact</button><button class="tab" data-preset="boxed">boxed</button><button class="tab" data-preset="writing">writing</button><button class="tab" data-preset="plain">plain</button></div><div class="panes"><div class="src"><span class="row" data-k="1"><span class="ln">1</span><span class="cl1"># Widget Service</span></span><span class="row"><span class="ln">2</span></span><span class="row" data-k="3"><span class="ln">3</span><span class="cl2">## Overview</span></span><span class="row" data-k="4"><span class="ln">4</span><span class="cl3">### Goals</span></span><span class="row" data-k="5"><span class="ln">5</span><span class="cl3">### Non-Goals</span></span><span class="row"><span class="ln">6</span></span><span class="row" data-k="7"><span class="ln">7</span><span class="cl2">## Getting Started</span></span><span class="row" data-k="8"><span class="ln">8</span><span class="cl3">### Install</span></span><span class="row"><span class="ln">9</span></span><span class="row" data-k="10"><span class="ln">10</span><span class="cl2">## Configuration</span></span><span class="row" data-k="11"><span class="ln">11</span><span class="cmark">- </span><span class="cok">[x]</span> HTTP endpoint</span><span class="row" data-k="12"><span class="ln">12</span><span class="cmark">- </span><span class="cno">[ ]</span> Streaming</span><span class="row" data-k="13"><span class="ln">13</span><span class="cmt">&gt; </span><span class="cnote">[!NOTE]</span> Binds to localhost.</span></div><div class="tocwrap"><div class="toc" data-preset="default"><div class="tt">󰠶 Table of Contents</div><span class="e" data-k="1"><span class="cl1">󰌕</span> <span class="nm">1.1</span> <span class="cl1">Widget Service</span></span><span class="e" data-k="3"><span class="tr">├╴</span><span class="cl2">󰌖</span> <span class="nm">2.1</span> <span class="cl2">Overview</span></span><span class="e" data-k="4"><span class="tr">│ ├╴</span><span class="cl3">󰼑</span> <span class="nm">3.1</span> <span class="cl3">Goals</span></span><span class="e" data-k="5"><span class="tr">│ ╰╴</span><span class="cl3">󰼑</span> <span class="nm">3.2</span> <span class="cl3">Non-Goals</span></span><span class="e" data-k="7"><span class="tr">├╴</span><span class="cl2">󰌖</span> <span class="nm">2.2</span> <span class="cl2">Getting Started</span></span><span class="e" data-k="8"><span class="tr">│ ╰╴</span><span class="cl3">󰼑</span> <span class="nm">3.3</span> <span class="cl3">Install</span></span><span class="e" data-k="10"><span class="tr">╰╴</span><span class="cl2">󰌖</span> <span class="nm">2.3</span> <span class="cl2">Configuration</span></span><span class="e" data-k="11"><span class="tr">  ├╴</span><span class="cok">󰗠</span> <span class="nm">1</span> HTTP endpoint</span><span class="e" data-k="12"><span class="tr">  ├╴</span><span class="cno">󰄰</span> <span class="nm">2</span> Streaming</span><span class="e" data-k="13"><span class="tr">  ╰╴</span><span class="cnote">󰋽</span> <span class="nm">1</span> Binds to lo…</span></div><div class="toc" data-preset="compact" hidden><span class="e" data-k="1"><span class="cl1">󰌕</span> <span class="nm">1.1</span></span><span class="e" data-k="3"><span class="tr">├╴</span><span class="cl2">󰌖</span> <span class="nm">2.1</span></span><span class="e" data-k="4"><span class="tr">│ ├╴</span><span class="cl3">󰼑</span> <span class="nm">3.1</span></span><span class="e" data-k="5"><span class="tr">│ ╰╴</span><span class="cl3">󰼑</span> <span class="nm">3.2</span></span><span class="e" data-k="7"><span class="tr">├╴</span><span class="cl2">󰌖</span> <span class="nm">2.2</span></span><span class="e" data-k="8"><span class="tr">│ ╰╴</span><span class="cl3">󰼑</span> <span class="nm">3.3</span></span><span class="e" data-k="10"><span class="tr">╰╴</span><span class="cl2">󰌖</span> <span class="nm">2.3</span></span><span class="e" data-k="11"><span class="tr">  ├╴</span><span class="cok">󰗠</span> <span class="nm">1</span></span><span class="e" data-k="12"><span class="tr">  ├╴</span><span class="cno">󰄰</span> <span class="nm">2</span></span><span class="e" data-k="13"><span class="tr">  ╰╴</span><span class="cnote">󰋽</span> <span class="nm">1</span></span></div><div class="toc" data-preset="boxed" hidden><div class="tt">󰠶 Table of Contents</div><span class="e" data-k="1"><span class="cl1">󰌕</span> <span class="nm">1.1</span> <span class="cl1">Widget Service</span></span><span class="e" data-k="3"><span class="tr">├─ </span><span class="cl2">󰌖</span> <span class="nm">2.1</span> <span class="cl2">Overview</span></span><span class="e" data-k="4"><span class="tr">│  ├─ </span><span class="cl3">󰼑</span> <span class="nm">3.1</span> <span class="cl3">Goals</span></span><span class="e" data-k="5"><span class="tr">│  └─ </span><span class="cl3">󰼑</span> <span class="nm">3.2</span> <span class="cl3">Non-Goals</span></span><span class="e" data-k="7"><span class="tr">├─ </span><span class="cl2">󰌖</span> <span class="nm">2.2</span> <span class="cl2">Getting Started</span></span><span class="e" data-k="8"><span class="tr">│  └─ </span><span class="cl3">󰼑</span> <span class="nm">3.3</span> <span class="cl3">Install</span></span><span class="e" data-k="10"><span class="tr">└─ </span><span class="cl2">󰌖</span> <span class="nm">2.3</span> <span class="cl2">Configuration</span></span><span class="e" data-k="11"><span class="tr">   ├─ </span><span class="cok">󰗠</span> <span class="nm">1</span> HTTP endpoint</span><span class="e" data-k="12"><span class="tr">   ├─ </span><span class="cno">󰄰</span> <span class="nm">2</span> Streaming</span><span class="e" data-k="13"><span class="tr">   └─ </span><span class="cnote">󰋽</span> <span class="nm">1</span> Binds to lo…</span></div><div class="toc" data-preset="writing" hidden><div class="tt">󰠶 Table of Contents</div><span class="e" data-k="1"><span class="nm">1</span> <span class="cl1">Widget Service</span></span><span class="e" data-k="3"><span class="tr">  </span><span class="nm">1.1</span> <span class="cl2">Overview</span></span><span class="e" data-k="4"><span class="tr">    </span><span class="nm">1.1.1</span> <span class="cl3">Goals</span></span><span class="e" data-k="5"><span class="tr">    </span><span class="nm">1.1.2</span> <span class="cl3">Non-Goals</span></span><span class="e" data-k="7"><span class="tr">  </span><span class="nm">1.2</span> <span class="cl2">Getting Started</span></span><span class="e" data-k="8"><span class="tr">    </span><span class="nm">1.2.1</span> <span class="cl3">Install</span></span><span class="e" data-k="10"><span class="tr">  </span><span class="nm">1.3</span> <span class="cl2">Configuration</span></span></div><div class="toc" data-preset="plain" hidden><div class="tt">Table of Contents</div><span class="e" data-k="1"><span class="cl1">#</span> <span class="nm">1.1</span> <span class="cl1">Widget Service</span></span><span class="e" data-k="3"><span class="tr">├─ </span><span class="cl2">##</span> <span class="nm">2.1</span> <span class="cl2">Overview</span></span><span class="e" data-k="4"><span class="tr">│  ├─ </span><span class="cl3">###</span> <span class="nm">3.1</span> <span class="cl3">Goals</span></span><span class="e" data-k="5"><span class="tr">│  └─ </span><span class="cl3">###</span> <span class="nm">3.2</span> <span class="cl3">Non-Goals</span></span><span class="e" data-k="7"><span class="tr">├─ </span><span class="cl2">##</span> <span class="nm">2.2</span> <span class="cl2">Getting Started</span></span><span class="e" data-k="8"><span class="tr">│  └─ </span><span class="cl3">###</span> <span class="nm">3.3</span> <span class="cl3">Install</span></span><span class="e" data-k="10"><span class="tr">└─ </span><span class="cl2">##</span> <span class="nm">2.3</span> <span class="cl2">Configuration</span></span><span class="e" data-k="11"><span class="tr">   ├─ </span><span class="cok">[x]</span> <span class="nm">1</span> HTTP endpoint</span><span class="e" data-k="12"><span class="tr">   ├─ </span><span class="cno">[ ]</span> <span class="nm">2</span> Streaming</span><span class="e" data-k="13"><span class="tr">   └─ </span><span class="cnote">!</span> <span class="nm">1</span> Binds to lo…</span></div></div></div></div>
     </section>
 
     <section class="blk" id="features">
-      <h2><i class="gi" aria-hidden="true"><svg><use href="#ic-spark"/></svg></i>Features</h2>
       <div class="flist">
         <div>
           <h3><i class="gi" aria-hidden="true"><svg><use href="#ic-follow"/></svg></i>Two-way follow</h3>
@@ -101,42 +89,132 @@
       </div>
     </section>
 
+    <!-- Presets section hidden for now; uncomment to restore (also re-add nav/TOC refs + "look" in ids)
     <section class="blk" id="look">
       <h2><i class="gi" aria-hidden="true"><svg><use href="#ic-image"/></svg></i>Presets</h2>
-      <div class="gal">
-        <figure>
-          <img src="./img/compact.png" alt="toc.nvim compact preset" loading="lazy" />
-          <figcaption><b>compact</b><span>glyph-only</span></figcaption>
-        </figure>
-        <figure>
-          <img src="./img/minimal.png" alt="toc.nvim minimal preset" loading="lazy" />
-          <figcaption><b>minimal</b><span>no numbers</span></figcaption>
-        </figure>
-        <figure>
-          <img src="./img/writing.png" alt="toc.nvim writing preset" loading="lazy" />
-          <figcaption><b>writing</b><span>text-only</span></figcaption>
-        </figure>
-        <figure>
-          <img src="./img/plain.png" alt="toc.nvim plain preset" loading="lazy" />
-          <figcaption><b>plain</b><span>no Nerd Font</span></figcaption>
-        </figure>
+      <div class="presets">
+        <figure class="preset"><div class="cap"><b>compact</b><span>glyph + number</span></div><pre><span class="cl1">󰌕</span><span class="cl1"> heading <span class="nm">1.1</span></span>
+<span class="tr">├╴</span><span class="cl2">󰌖</span><span class="cl2"> heading <span class="nm">2.1</span></span>
+<span class="tr">│ ├╴</span><span class="cl3">󰼑</span><span class="cl3"> heading <span class="nm">3.1</span></span>
+<span class="tr">│ ╰╴</span><span class="cl3">󰼑</span><span class="cl3"> heading <span class="nm">3.2</span></span>
+<span class="tr">├╴</span><span class="cl2">󰌖</span><span class="cl2"> heading <span class="nm">2.2</span></span>
+<span class="tr">│ ├╴</span><span class="cl3">󰼑</span><span class="cl3"> heading <span class="nm">3.3</span></span>
+<span class="tr">│ ├╴</span><span class="cl3">󰼑</span><span class="cl3"> heading <span class="nm">3.4</span></span>
+<span class="tr">│ │ ╰╴</span><span class="ccode"></span> code <span class="nm">1</span> [ sh]
+<span class="tr">│ ╰╴</span><span class="cl3">󰼑</span><span class="cl3"> heading <span class="nm">3.5</span></span>
+<span class="tr">│   ├╴</span><span class="ccode"></span> code <span class="nm">2</span> [ sh]
+<span class="tr">│   ╰╴</span><span class="cnote">󰋽</span> note <span class="nm">1</span>
+<span class="tr">├╴</span><span class="cl2">󰌖</span><span class="cl2"> heading <span class="nm">2.3</span></span>
+<span class="tr">│ ├╴</span><span class="ctable"></span> table <span class="nm">1</span>
+<span class="tr">│ ╰╴</span><span class="cwarn"></span> warning <span class="nm">1</span>
+<span class="tr">├╴</span><span class="cl2">󰌖</span><span class="cl2"> heading <span class="nm">2.4</span></span>
+<span class="tr">│ ├╴</span><span class="cl3">󰼑</span><span class="cl3"> heading <span class="nm">3.6</span></span>
+<span class="tr">│ ╰╴</span><span class="cl3">󰼑</span><span class="cl3"> heading <span class="nm">3.7</span></span>
+<span class="tr">│   ├╴</span><span class="cl4">󰎲</span><span class="cl4"> heading <span class="nm">4.1</span></span>
+<span class="tr">│   ╰╴</span><span class="cl4">󰎲</span><span class="cl4"> heading <span class="nm">4.2</span></span>
+<span class="tr">│     ╰╴</span><span class="ctip"></span> tip <span class="nm">1</span>
+<span class="tr">├╴</span><span class="cl2">󰌖</span><span class="cl2"> heading <span class="nm">2.5</span></span>
+<span class="tr">│ ├╴</span><span class="cok">󰗠</span> task <span class="nm">1</span>
+<span class="tr">│ ├╴</span><span class="cok">󰗠</span> task <span class="nm">2</span>
+<span class="tr">│ ├╴</span><span class="cno">󰄰</span> task <span class="nm">3</span>
+<span class="tr">│ ╰╴</span><span class="cno">󰄰</span> task <span class="nm">4</span>
+<span class="tr">│   ├╴</span><span class="cno">󰄰</span> task <span class="nm">5</span>
+<span class="tr">│   ╰╴</span><span class="cno">󰄰</span> task <span class="nm">6</span>
+<span class="tr">├╴</span><span class="cl2">󰌖</span><span class="cl2"> heading <span class="nm">2.6</span></span>
+<span class="tr">╰╴</span><span class="cl2">󰌖</span><span class="cl2"> heading <span class="nm">2.7</span></span></pre></figure>
+        <figure class="preset"><div class="cap"><b>boxed</b><span>box-drawing tree</span></div><pre><span class="cl1">󰌕</span><span class="cl1"> heading <span class="nm">1.1</span> Widget Service</span>
+<span class="tr">├─ </span><span class="cl2">󰌖</span><span class="cl2"> heading <span class="nm">2.1</span> Overview</span>
+<span class="tr">│  ├─ </span><span class="cl3">󰼑</span><span class="cl3"> heading <span class="nm">3.1</span> Goals</span>
+<span class="tr">│  └─ </span><span class="cl3">󰼑</span><span class="cl3"> heading <span class="nm">3.2</span> Non-Goals</span>
+<span class="tr">├─ </span><span class="cl2">󰌖</span><span class="cl2"> heading <span class="nm">2.2</span> Getting Started</span>
+<span class="tr">│  ├─ </span><span class="cl3">󰼑</span><span class="cl3"> heading <span class="nm">3.3</span> Requirements</span>
+<span class="tr">│  ├─ </span><span class="cl3">󰼑</span><span class="cl3"> heading <span class="nm">3.4</span> Install</span>
+<span class="tr">│  │  └─ </span><span class="ccode"></span> code <span class="nm">1</span> [ sh]
+<span class="tr">│  └─ </span><span class="cl3">󰼑</span><span class="cl3"> heading <span class="nm">3.5</span> First Run</span>
+<span class="tr">│     ├─ </span><span class="ccode"></span> code <span class="nm">2</span> [ sh]
+<span class="tr">│     └─ </span><span class="cnote">󰋽</span> note <span class="nm">1</span> The server bi…
+<span class="tr">├─ </span><span class="cl2">󰌖</span><span class="cl2"> heading <span class="nm">2.3</span> Configuration</span>
+<span class="tr">│  ├─ </span><span class="ctable"></span> table <span class="nm">1</span> Key
+<span class="tr">│  └─ </span><span class="cwarn"></span> warning <span class="nm">1</span> Disabling the…
+<span class="tr">├─ </span><span class="cl2">󰌖</span><span class="cl2"> heading <span class="nm">2.4</span> Architecture</span>
+<span class="tr">│  ├─ </span><span class="cl3">󰼑</span><span class="cl3"> heading <span class="nm">3.6</span> Request Flow</span>
+<span class="tr">│  └─ </span><span class="cl3">󰼑</span><span class="cl3"> heading <span class="nm">3.7</span> Modules</span>
+<span class="tr">│     ├─ </span><span class="cl4">󰎲</span><span class="cl4"> heading <span class="nm">4.1</span> Parser</span>
+<span class="tr">│     └─ </span><span class="cl4">󰎲</span><span class="cl4"> heading <span class="nm">4.2</span> Renderer</span>
+<span class="tr">│        └─ </span><span class="ctip"></span> tip <span class="nm">1</span> The rendere…
+<span class="tr">├─ </span><span class="cl2">󰌖</span><span class="cl2"> heading <span class="nm">2.5</span> Roadmap</span>
+<span class="tr">│  ├─ </span><span class="cok">󰗠</span> task <span class="nm">1</span> HTTP endpoint
+<span class="tr">│  ├─ </span><span class="cok">󰗠</span> task <span class="nm">2</span> Render cache
+<span class="tr">│  ├─ </span><span class="cno">󰄰</span> task <span class="nm">3</span> Streaming respon…
+<span class="tr">│  └─ </span><span class="cno">󰄰</span> task <span class="nm">4</span> Plugin API
+<span class="tr">│     ├─ </span><span class="cno">󰄰</span> task <span class="nm">5</span> Discovery
+<span class="tr">│     └─ </span><span class="cno">󰄰</span> task <span class="nm">6</span> Sandboxing
+<span class="tr">├─ </span><span class="cl2">󰌖</span><span class="cl2"> heading <span class="nm">2.6</span> References</span>
+<span class="tr">└─ </span><span class="cl2">󰌖</span><span class="cl2"> heading <span class="nm">2.7</span> License</span></pre></figure>
+        <figure class="preset"><div class="cap"><b>writing</b><span>prose outline</span></div><pre>heading <span class="nm">1</span> Widget Service
+<span class="tr">  </span>heading <span class="nm">1.1</span> Overview
+<span class="tr">    </span>heading <span class="nm">1.1.1</span> Goals
+<span class="tr">    </span>heading <span class="nm">1.1.2</span> Non-Goals
+<span class="tr">  </span>heading <span class="nm">1.2</span> Getting Started
+<span class="tr">    </span>heading <span class="nm">1.2.1</span> Requirements
+<span class="tr">    </span>heading <span class="nm">1.2.2</span> Install
+<span class="tr">    </span>heading <span class="nm">1.2.3</span> First Run
+<span class="tr">  </span>heading <span class="nm">1.3</span> Configuration
+<span class="tr">  </span>heading <span class="nm">1.4</span> Architecture
+<span class="tr">    </span>heading <span class="nm">1.4.1</span> Request Flow
+<span class="tr">    </span>heading <span class="nm">1.4.2</span> Modules
+<span class="tr">      </span>heading <span class="nm">1.4.2.1</span> Parser
+<span class="tr">      </span>heading <span class="nm">1.4.2.2</span> Renderer
+<span class="tr">  </span>heading <span class="nm">1.5</span> Roadmap
+<span class="tr">  </span>heading <span class="nm">1.6</span> References
+<span class="tr">  </span>heading <span class="nm">1.7</span> License</pre></figure>
+        <figure class="preset"><div class="cap"><b>plain</b><span>no Nerd Font</span></div><pre><span class="cl1">#</span><span class="cl1"> heading <span class="nm">1.1</span> Widget Service</span>
+<span class="tr">├─ </span><span class="cl2">##</span><span class="cl2"> heading <span class="nm">2.1</span> Overview</span>
+<span class="tr">│  ├─ </span><span class="cl3">###</span><span class="cl3"> heading <span class="nm">3.1</span> Goals</span>
+<span class="tr">│  └─ </span><span class="cl3">###</span><span class="cl3"> heading <span class="nm">3.2</span> Non-Goals</span>
+<span class="tr">├─ </span><span class="cl2">##</span><span class="cl2"> heading <span class="nm">2.2</span> Getting Start…</span>
+<span class="tr">│  ├─ </span><span class="cl3">###</span><span class="cl3"> heading <span class="nm">3.3</span> Requireme…</span>
+<span class="tr">│  ├─ </span><span class="cl3">###</span><span class="cl3"> heading <span class="nm">3.4</span> Install</span>
+<span class="tr">│  │  └─ </span>code <span class="nm">1</span> [sh]
+<span class="tr">│  └─ </span><span class="cl3">###</span><span class="cl3"> heading <span class="nm">3.5</span> First Run</span>
+<span class="tr">│     ├─ </span>code <span class="nm">2</span> [sh]
+<span class="tr">│     └─ </span><span class="cnote">!</span> note <span class="nm">1</span> The server bi…
+<span class="tr">├─ </span><span class="cl2">##</span><span class="cl2"> heading <span class="nm">2.3</span> Configuration</span>
+<span class="tr">│  ├─ </span><span class="ctable">#</span> table <span class="nm">1</span> Key
+<span class="tr">│  └─ </span><span class="cwarn">!</span> warning <span class="nm">1</span> Disabling the…
+<span class="tr">├─ </span><span class="cl2">##</span><span class="cl2"> heading <span class="nm">2.4</span> Architecture</span>
+<span class="tr">│  ├─ </span><span class="cl3">###</span><span class="cl3"> heading <span class="nm">3.6</span> Request F…</span>
+<span class="tr">│  └─ </span><span class="cl3">###</span><span class="cl3"> heading <span class="nm">3.7</span> Modules</span>
+<span class="tr">│     ├─ </span><span class="cl4">####</span><span class="cl4"> heading <span class="nm">4.1</span> Parser</span>
+<span class="tr">│     └─ </span><span class="cl4">####</span><span class="cl4"> heading <span class="nm">4.2</span> Rende…</span>
+<span class="tr">│        └─ </span><span class="ctip">!</span> tip <span class="nm">1</span> The rendere…
+<span class="tr">├─ </span><span class="cl2">##</span><span class="cl2"> heading <span class="nm">2.5</span> Roadmap</span>
+<span class="tr">│  ├─ </span><span class="cok">[x]</span> task <span class="nm">1</span> HTTP endpoint
+<span class="tr">│  ├─ </span><span class="cok">[x]</span> task <span class="nm">2</span> Render cache
+<span class="tr">│  ├─ </span><span class="cno">[ ]</span> task <span class="nm">3</span> Streaming resp…
+<span class="tr">│  └─ </span><span class="cno">[ ]</span> task <span class="nm">4</span> Plugin API
+<span class="tr">│     ├─ </span><span class="cno">[ ]</span> task <span class="nm">5</span> Discovery
+<span class="tr">│     └─ </span><span class="cno">[ ]</span> task <span class="nm">6</span> Sandboxing
+<span class="tr">├─ </span><span class="cl2">##</span><span class="cl2"> heading <span class="nm">2.6</span> References</span>
+<span class="tr">└─ </span><span class="cl2">##</span><span class="cl2"> heading <span class="nm">2.7</span> License</span></pre></figure>
       </div>
     </section>
+    -->
 
     <section class="blk" id="install">
       <h2><i class="gi" aria-hidden="true"><svg><use href="#ic-download"/></svg></i>Install</h2>
       <div class="code">
-        <div class="cap">lua · lazy.nvim</div>
+        <div class="cap"><svg class="luaicon" aria-hidden="true"><use href="#ic-lua"/></svg>lua<span class="fname">lazy.nvim</span></div>
 <pre>{
-  <span class="s">"zerochae/toc.nvim"</span>,
-  ft = { <span class="s">"markdown"</span>, <span class="s">"help"</span>, <span class="s">"html"</span>, <span class="s">"org"</span>, <span class="s">"rst"</span> },
-  dependencies = { <span class="c">-- all optional</span>
-    <span class="s">"nvim-tree/nvim-web-devicons"</span>,
-    <span class="s">"OXY2DEV/markview.nvim"</span>,
-    <span class="s">"nvim-treesitter/nvim-treesitter"</span>,
+  <span class="tok-s">"zerochae/toc.nvim"</span>,
+  <span class="tok-p">ft</span> = { <span class="tok-s">"markdown"</span>, <span class="tok-s">"help"</span>, <span class="tok-s">"html"</span>, <span class="tok-s">"org"</span>, <span class="tok-s">"rst"</span> },
+  <span class="tok-p">dependencies</span> = { <span class="tok-c">-- all optional</span>
+    <span class="tok-s">"nvim-tree/nvim-web-devicons"</span>,
+    <span class="tok-s">"OXY2DEV/markview.nvim"</span>,
+    <span class="tok-s">"nvim-treesitter/nvim-treesitter"</span>,
   },
-  keys = { { <span class="s">"&lt;leader&gt;t"</span>, <span class="s">"&lt;cmd&gt;Toc toggle&lt;cr&gt;"</span> } },
-  opts = {},
+  <span class="tok-p">keys</span> = { { <span class="tok-s">"&lt;leader&gt;t"</span>, <span class="tok-s">"&lt;cmd&gt;Toc toggle&lt;cr&gt;"</span> } },
+  <span class="tok-p">opts</span> = {},
 }</pre>
       </div>
       <p class="note">Markdown and Vim help parse with no dependencies. A Nerd Font is needed for glyphs (except <b>plain</b>).</p>
@@ -145,12 +223,12 @@
     <section class="blk" id="config">
       <h2><i class="gi" aria-hidden="true"><svg><use href="#ic-sliders"/></svg></i>Configure</h2>
       <div class="code" style="margin-bottom:24px;">
-        <div class="cap">everything is optional</div>
-<pre><span class="k">require</span>(<span class="s">"toc"</span>).setup {
-  preset = <span class="s">"compact"</span>,   <span class="c">-- compact|boxed|minimal|writing|plain</span>
-  width = <span class="s">"auto"</span>,      <span class="c">-- or a column count</span>
-  numbers = <span class="s">"level"</span>,   <span class="c">-- level|nested|flat|false</span>
-  max_level = <span class="b">nil</span>,     <span class="c">-- e.g. 2 hides below H2</span>
+        <div class="cap"><svg class="luaicon" aria-hidden="true"><use href="#ic-lua"/></svg>lua<span class="fname">optional</span></div>
+<pre><span class="tok-f">require</span>(<span class="tok-s">"toc"</span>).<span class="tok-f">setup</span> {
+  <span class="tok-p">preset</span> = <span class="tok-s">"compact"</span>,   <span class="tok-c">-- compact|boxed|minimal|writing|plain</span>
+  <span class="tok-p">width</span> = <span class="tok-s">"auto"</span>,      <span class="tok-c">-- or a column count</span>
+  <span class="tok-p">numbers</span> = <span class="tok-s">"level"</span>,   <span class="tok-c">-- level|nested|flat|false</span>
+  <span class="tok-p">max_level</span> = <span class="tok-n">nil</span>,     <span class="tok-c">-- e.g. 2 hides below H2</span>
 }</pre>
       </div>
       <div class="rows">
@@ -171,34 +249,14 @@
         <div class="r"><span class="key"><kbd>R</kbd> · <kbd>q</kbd></span><span class="val">Refresh · close.</span></div>
       </div>
       <p class="note" style="margin-bottom:14px;">Formats:</p>
-      <div class="fmts">
-        <span><i class="gi" aria-hidden="true"><svg><use href="#ic-file"/></svg></i><b>Markdown</b></span>
-        <span><i class="gi" aria-hidden="true"><svg><use href="#ic-file"/></svg></i><b>Vim help</b></span>
-        <span><i class="gi" aria-hidden="true"><svg><use href="#ic-file"/></svg></i><b>Org</b></span>
-        <span><i class="gi" aria-hidden="true"><svg><use href="#ic-file"/></svg></i><b>reStructuredText</b></span>
-        <span class="opt"><i class="gi" aria-hidden="true"><svg><use href="#ic-file"/></svg></i><b>HTML</b> treesitter</span>
-      </div>
+      <div class="fmts"><span><span class="fdev" style="color:#abb2bf"></span><b>Markdown</b></span><span><span class="fdev" style="color:#98c379"></span><b>Vim help</b></span><span><span class="fdev" style="color:#c678dd"></span><b>Org</b></span><span><span class="fdev" style="color:#56b6c2"></span><b>reStructuredText</b></span><span class="opt"><span class="fdev" style="color:#d19a66"></span><b>HTML</b> treesitter</span></div>
 
       <div class="foot">
-        <span>MIT © zerochae · v1.3.0</span>
+        <span>MIT © zerochae</span>
         <span><a href="https://github.com/zerochae/toc.nvim">GitHub</a> · <a href="https://github.com/zerochae/toc.nvim/blob/master/CHANGELOG.md">Changelog</a></span>
       </div>
     </section>
   </main>
-
-  <!-- RIGHT TOC (live demo of the plugin) -->
-  <aside class="side side-right">
-    <div class="tocpanel" id="tocpanel">
-      <div class="toc-title"><i class="gi" aria-hidden="true"><svg><use href="#ic-toc"/></svg></i>On this page</div>
-      <a class="toc-e" href="#overview" data-target="overview"><span class="arw">▸</span>Overview</a>
-      <a class="toc-e" href="#features" data-target="features"><span class="tree">├╴</span><span class="arw">▸</span>Features</a>
-      <a class="toc-e" href="#look" data-target="look"><span class="tree">├╴</span><span class="arw">▸</span>Presets</a>
-      <a class="toc-e" href="#install" data-target="install"><span class="tree">├╴</span><span class="arw">▸</span>Install</a>
-      <a class="toc-e" href="#config" data-target="config"><span class="tree">├╴</span><span class="arw">▸</span>Configure</a>
-      <a class="toc-e" href="#usage" data-target="usage"><span class="tree">╰╴</span><span class="arw">▸</span>Usage</a>
-    </div>
-    <p class="toc-hint"><i class="gi" aria-hidden="true"><svg><use href="#ic-scroll"/></svg></i>follows your scroll — like the plugin</p>
-  </aside>
 </div>
 <script src="./main.js" defer></script>
 </body>
